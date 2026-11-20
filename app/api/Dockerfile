@@ -15,7 +15,11 @@ RUN apk upgrade --no-cache \
            /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg
 WORKDIR /app
 # Bundle de CAs da AWS: a API valida o certificado TLS do RDS (SEC-66).
-ADD --chown=node:node https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /app/certs/rds-global-bundle.pem
+# --chmod=644: arquivo baixado por ADD vem com permissão 600, e no Kubernetes a API roda com
+# UID 10001 (não o dono), então não conseguiria ler. O bundle é público; só leitura para todos.
+# A pasta é criada antes porque a que o ADD cria também vem fechada para outros usuários.
+RUN install -d -m 755 /app/certs
+ADD --chown=node:node --chmod=644 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /app/certs/rds-global-bundle.pem
 COPY --from=deps --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node package.json ./
 COPY --chown=node:node sql ./sql

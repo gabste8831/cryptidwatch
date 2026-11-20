@@ -187,6 +187,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: docker build
         run: docker build -t "cryptidwatch-${{ matrix.app }}:${{ github.sha }}" "app/${{ matrix.app }}"
+      # Roda a imagem como no Kubernetes (UID alto, disco só leitura): pega erro de permissão
+      # antes do deploy (aconteceu com o certificado do RDS no primeiro deploy).
+      - name: Roda como no Kubernetes (UID 10001, somente leitura)
+        if: matrix.app == 'api'
+        run: >
+          docker run --rm --user 10001:1000 --read-only --entrypoint sh
+          "cryptidwatch-api:${{ github.sha }}" -c 'test -r /app/certs/rds-global-bundle.pem && test -r /app/src/server.js'
       - name: Trivy - vulnerabilidades HIGH/CRITICAL com correção falham o job (SEC-83)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
