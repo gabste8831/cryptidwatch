@@ -138,5 +138,8 @@ critérios de aceite que viram testes. Testes devem citar o SEC-xx no nome
 4. ~~Terraform: backend S3, VPC, EKS, ALB+WAF+ACM, RDS, Redis, S3, ECR~~ (falta aplicar na AWS)
 5. ~~Manifests k8s + NetworkPolicy~~ (`k8s/` + `scripts/push-images.sh`, `deploy.sh`,
    `seed-moderator.sh`; validados com kubeconform, checkov e shellcheck via Docker)
-6. Workflow do GitHub Actions + SonarCloud
+6. ~~Workflow do GitHub Actions + SonarCloud~~ (`.github/workflows/ci.yml`; Sonar org/projeto
+   `gabste8831` / `gabste8831_cryptidwatch`, análise automática desligada, `SONAR_TOKEN` no repo;
+   checks obrigatórios na `main`). Para a AWS: secrets no environment `aws-academy` +
+   variáveis `TF_STATE_BUCKET` e `AWS_DEPLOY_ENABLED=true` (docs/pipeline.md).
 7. Testar o WAF (SQLi/XSS → 403) e juntar evidências para a apresentação
