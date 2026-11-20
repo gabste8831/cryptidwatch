@@ -113,5 +113,7 @@ INSERT INTO cryptids (slug, name, description) VALUES
   ('lobisomem',        'Lobisomem',         'Homem que vira lobo nas noites de lua cheia.'),
   ('mula-sem-cabeca',  'Mula sem cabeça',   'Mula que solta fogo pelo pescoço e galopa pelas noites.'),
   ('mothman',          'Mothman',           'Homem-mariposa de olhos vermelhos de Point Pleasant (EUA).'),
-  ('nessie',           'Monstro do Lago Ness', 'Réptil aquático de pescoço longo do lago Ness (Escócia).')
+  ('nessie',           'Monstro do Lago Ness', 'Réptil aquático de pescoço longo do lago Ness (Escócia).'),
+  ('ovni',             'Disco voador',      'Objeto voador não identificado: luzes, discos e desenhos em plantações.'),
+  ('alienigena',       'Alienígena',        'Ser cinzento de cabeça grande e olhos pretos, visto perto de OVNIs.')
 ON CONFLICT (slug) DO NOTHING;

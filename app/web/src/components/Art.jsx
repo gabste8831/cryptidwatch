@@ -148,6 +148,23 @@ const SHAPES = {
     </g>
   ),
   serpent: <path d="M20 150c30-60 60 20 90-30s50-40 60-80c5-20 20-20 22 0 2 15-8 20-14 40-12 44-48 50-70 86s-60 30-88-16z" />,
+  saucer: (
+    <g>
+      <ellipse cx="100" cy="92" rx="34" ry="24" />
+      <ellipse cx="100" cy="104" rx="84" ry="20" />
+      <ellipse cx="100" cy="100" rx="84" ry="10" fill="#d9c9a6" opacity="0.35" />
+      {[52, 76, 100, 124, 148].map((x) => <circle key={x} cx={x} cy="106" r="4.5" fill="#d9c9a6" />)}
+      <path d="M78 124 L58 192 H142 L122 124 Z" opacity="0.28" />
+    </g>
+  ),
+  grey: (
+    <g>
+      <path d="M100 18c-38 0-58 26-58 56 0 34 32 66 58 78 26-12 58-44 58-78 0-30-20-56-58-56z" />
+      <path d="M62 74c10-6 24-4 30 10-8 8-24 8-30-10z" fill="#d9c9a6" />
+      <path d="M138 74c-10-6-24-4-30 10 8 8 24 8 30-10z" fill="#d9c9a6" />
+      <rect x="88" y="150" width="24" height="44" rx="10" />
+    </g>
+  ),
   winged: (
     <g>
       <path d="M100 50c-30 0-60-30-96-20 20 30 30 80 60 90 10 4 20-6 36-6s26 10 36 6c30-10 40-60 60-90-36-10-66 20-96 20z" />
@@ -159,6 +176,7 @@ const SHAPES = {
 };
 const SHAPE_BY_SLUG = {
   'et-de-varginha': 'alien', boitata: 'serpent', nessie: 'serpent', mothman: 'winged',
+  ovni: 'saucer', alienigena: 'grey',
 };
 
 export function CryptidSilhouette({ slug }) {
