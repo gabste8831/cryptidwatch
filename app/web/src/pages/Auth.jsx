@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '../lib/auth.jsx';
-import { OldPhotoScene } from '../components/Art.jsx';
+import { WaxSeal } from '../components/Art.jsx';
+import photoLogin from '../assets/login-et-de-varginha.webp';
+import photoRegister from '../assets/cadastro-chupa-cabra.webp';
 
 // Só aceita voltar para caminhos internos (evita open redirect: ?voltar=https://site-malicioso).
 function safeReturn(path) {
@@ -38,9 +40,14 @@ export default function Auth({ mode }) {
       <div className="auth-art" aria-hidden="true">
         <figure className="old-photo" style={{ margin: 0 }}>
           <span className="tape tape-tr" />
-          <div className="frame"><OldPhotoScene /></div>
-          <figcaption className="caption hand">{isRegister ? "toda testemunha começa assim" : "de volta à trilha"}</figcaption>
+          <div className="frame">
+            <img src={isRegister ? photoRegister : photoLogin} width="1000" height="671" alt="" />
+          </div>
+          <figcaption className="caption hand">
+            {isRegister ? 'Campina Grande, ago. 2024 · câmera do curral' : 'Varginha, jan. 1996 · câmera da loja'}
+          </figcaption>
         </figure>
+        <WaxSeal title="" />
       </div>
       <div className="auth-form paper on-paper">
         <div>
