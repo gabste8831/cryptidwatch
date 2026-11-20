@@ -1,10 +1,10 @@
-FROM node:22-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 # Só dependências de produção na imagem final (menos superfície de ataque).
 RUN npm ci --omit=dev --no-audit --no-fund --ignore-scripts
 
-FROM node:22-alpine
+FROM node:26-alpine
 ENV NODE_ENV=production \
     DB_SSL_CA_FILE=/app/certs/rds-global-bundle.pem
 # Imagem final sem gerenciador de pacotes: a API não usa npm/yarn em produção, e eles
