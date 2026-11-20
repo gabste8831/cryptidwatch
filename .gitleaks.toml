@@ -1,0 +1,7 @@
+# Configuração do gitleaks (SEC-82): regras padrão + exceções justificadas.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Arquivos de exemplo: só placeholders, nunca valores reais"
+paths = ['''(^|/)\.env\.example$''']
