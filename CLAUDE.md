@@ -4,6 +4,9 @@ Trabalho final de "Auditoria e Segurança de Sistemas" (UNIDAVI, SI).
 O diagrama de arquitetura (parte 1, 2 pontos) já foi entregue: `docs/arquitetura.jpg`.
 Agora é a implementação completa na AWS.
 
+## Commits
+Sem linha "Co-Authored-By" nem qualquer atribuição ao Claude (pedido do usuário).
+
 ## Avaliação
 - 4 pontos: apresentação individual
 - 4 pontos: desenvolvimento do trabalho
@@ -128,6 +131,7 @@ critérios de aceite que viram testes. Testes devem citar o SEC-xx no nome
 2. ~~API (Express) + testes~~
 3. ~~Web (React) + Dockerfiles + docker-compose para rodar local~~
 4. ~~Terraform: backend S3, VPC, EKS, ALB+WAF+ACM, RDS, Redis, S3, ECR~~ (falta aplicar na AWS)
-5. Manifests k8s + NetworkPolicy
+5. ~~Manifests k8s + NetworkPolicy~~ (`k8s/` + `scripts/push-images.sh`, `deploy.sh`,
+   `seed-moderator.sh`; validados com kubeconform, checkov e shellcheck via Docker)
 6. Workflow do GitHub Actions + SonarCloud
 7. Testar o WAF (SQLi/XSS → 403) e juntar evidências para a apresentação

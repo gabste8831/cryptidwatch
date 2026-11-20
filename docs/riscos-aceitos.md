@@ -49,6 +49,18 @@ seria o próximo passo.
 | CKV2_AWS_5 | Falso positivo: os security groups são usados em outros módulos |
 | CKV2_AWS_76 | Log4j já coberto pelo `AWSManagedRulesKnownBadInputsRuleSet` (o checkov não resolve o bloco `dynamic`) |
 
+## Kubernetes (checkov `--framework kubernetes`)
+
+Resultado: **180 aprovadas, 0 falhas, 4 exceções** (anotações `checkov.io/skipN` nos Deployments).
+
+| Verificação | Motivo |
+|---|---|
+| CKV_K8S_43 (digest da imagem) | O deploy usa a tag do commit num ECR com tags **imutáveis**: a tag não pode apontar para outra imagem, o que dá a mesma garantia do digest |
+| CKV_K8S_14 (tag fixa) | No repositório a imagem é um placeholder; o `scripts/deploy.sh` troca pela tag do commit |
+
+Corrigidos por causa do scan: UID alto (10001/10101, testado com filesystem só leitura e sem
+capabilities) e `imagePullPolicy: Always`.
+
 ## Corrigido por causa do scan
 
 Itens que o primeiro scan apontou e foram **corrigidos** em vez de aceitos:

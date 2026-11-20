@@ -1,0 +1,107 @@
+# Frontend (Nginx sem root servindo o React).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: web
+  namespace: cryptidwatch
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: cryptidwatch
+  labels: { app: web }
+  annotations:
+    checkov.io/skip1: CKV_K8S_43=Deploy usa a tag do commit num ECR com tags imutáveis (equivale a fixar o digest)
+    checkov.io/skip2: CKV_K8S_14=O placeholder é trocado pela tag do commit no scripts/deploy.sh
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels: { app: web }
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  template:
+    metadata:
+      labels: { app: web }
+    spec:
+      serviceAccountName: web
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10101 # UID alto; o grupo 101 (nginx) dá leitura aos arquivos da imagem
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile: { type: RuntimeDefault }
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app: web }
+      containers:
+        - name: web
+          image: WEB_IMAGE
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            # Na AWS o ALB manda /api/* direto para a API; o proxy do Nginx fica sem uso,
+            # e a NetworkPolicy nem deixa o web falar com a api.
+            - name: API_UPSTREAM
+              value: http://api.cryptidwatch.svc.cluster.local:3000
+            - name: PHOTO_ORIGIN # origem do bucket de fotos, liberada na CSP
+              valueFrom:
+                configMapKeyRef: { name: api-config, key: PHOTO_ORIGIN }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          resources:
+            requests: { cpu: 25m, memory: 32Mi }
+            limits: { cpu: 200m, memory: 128Mi }
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 20
+          # Com o filesystem só de leitura, o Nginx escreve só nestes dois lugares:
+          # /tmp (pid e cache) e conf.d (config gerada pelo envsubst ao subir).
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: tmp
+          emptyDir: { sizeLimit: 32Mi }
+        - name: nginx-conf
+          emptyDir: { sizeLimit: 1Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: cryptidwatch
+spec:
+  type: NodePort
+  selector: { app: web }
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      nodePort: 30080
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web
+  namespace: cryptidwatch
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app: web }

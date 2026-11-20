@@ -1,0 +1,84 @@
+# SEC-69: tudo bloqueado por padrão no namespace; depois, só o que cada pod precisa.
+# Aplicado pelo agente de NetworkPolicy do VPC CNI (ligado no Terraform).
+#
+#   internet → ALB (10.0.1-2.x) → NodePort → web:8080 / api:3000
+#   api → RDS 5432 e Redis 6379 (só subnets de dados), HTTPS (Secrets Manager, S3), IMDS, DNS
+#   web → só DNS (não fala com a api nem com os bancos)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: cryptidwatch
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web
+  namespace: cryptidwatch
+spec:
+  podSelector:
+    matchLabels: { app: web }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    # Tráfego do ALB (via NodePort chega com IP de dentro da VPC).
+    - from:
+        - ipBlock: { cidr: 10.0.0.0/16 }
+      ports:
+        - { protocol: TCP, port: 8080 }
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: kube-system }
+          podSelector:
+            matchLabels: { k8s-app: kube-dns }
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api
+  namespace: cryptidwatch
+spec:
+  podSelector:
+    matchLabels: { app: api }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.0.0.0/16 }
+      ports:
+        - { protocol: TCP, port: 3000 }
+  egress:
+    # DNS
+    - to:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: kube-system }
+          podSelector:
+            matchLabels: { k8s-app: kube-dns }
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    # PostgreSQL e Redis: só as subnets de dados.
+    - to:
+        - ipBlock: { cidr: 10.0.21.0/24 }
+        - ipBlock: { cidr: 10.0.22.0/24 }
+      ports:
+        - { protocol: TCP, port: 5432 }
+        - { protocol: TCP, port: 6379 }
+    # Credenciais da LabRole pelo metadata do nó (IMDSv2).
+    - to:
+        - ipBlock: { cidr: 169.254.169.254/32 }
+      ports:
+        - { protocol: TCP, port: 80 }
+    # HTTPS para Secrets Manager e S3. Fora da VPC, mas nunca para dentro dela
+    # (a api não abre conexão HTTPS com outros pods ou nós).
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [10.0.0.0/16, 169.254.0.0/16]
+      ports:
+        - { protocol: TCP, port: 443 }

@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - networkpolicy.yaml
+  - api.yaml
+  - web.yaml
+# O deploy troca as imagens pela do ECR com a tag do commit (scripts/deploy.sh).
+images:
+  - name: API_IMAGE
+    newName: cryptidwatch/api
+    newTag: local
+  - name: WEB_IMAGE
+    newName: cryptidwatch/web
+    newTag: local

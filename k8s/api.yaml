@@ -1,0 +1,111 @@
+# API (Express). Segredos NÃO ficam aqui: a API lê o Secrets Manager (APP_SECRET_ID)
+# com as credenciais da LabRole do nó. O ConfigMap api-config é gerado pelo deploy a
+# partir do `terraform output app_config` (só endereços e nomes, nada sigiloso).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api
+  namespace: cryptidwatch
+automountServiceAccountToken: false # a API não fala com o Kubernetes
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: cryptidwatch
+  labels: { app: api }
+  annotations:
+    checkov.io/skip1: CKV_K8S_43=Deploy usa a tag do commit num ECR com tags imutáveis (equivale a fixar o digest)
+    checkov.io/skip2: CKV_K8S_14=O placeholder é trocado pela tag do commit no scripts/deploy.sh
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels: { app: api }
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  template:
+    metadata:
+      labels: { app: api }
+    spec:
+      serviceAccountName: api
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001  # UID alto, sem conflito com usuários do nó (arquivos da imagem são só leitura)
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      # Uma réplica em cada nó/AZ quando possível.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app: api }
+      containers:
+        - name: api
+          image: API_IMAGE
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: api-config
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3000"
+            - name: TRUST_PROXY
+              value: "1" # o ALB é o único proxy na frente: req.ip = IP real do cliente
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          resources:
+            requests: { cpu: 100m, memory: 192Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          startupProbe:
+            httpGet: { path: /api/health, port: http }
+            periodSeconds: 3
+            failureThreshold: 40
+          readinessProbe:
+            httpGet: { path: /api/health/ready, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/health, port: http }
+            periodSeconds: 20
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: { sizeLimit: 64Mi }
+---
+# NodePort fixo: o target group do ALB (Terraform) aponta para esta porta nos nós.
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: cryptidwatch
+spec:
+  type: NodePort
+  selector: { app: api }
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+      nodePort: 30300
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api
+  namespace: cryptidwatch
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app: api }

@@ -1,0 +1,11 @@
+# Pod Security Admission no nível "restricted": o próprio Kubernetes recusa pods que rodem
+# como root, peçam privilégios, capabilities extras ou sem seccomp (SEC-72).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cryptidwatch
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
