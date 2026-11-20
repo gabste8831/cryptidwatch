@@ -1,0 +1,250 @@
+# Pipeline do CryptidWatch (specs/07-pipeline.md).
+#
+#   segredos ─┐
+#   api ──────┼─▶ sonarcloud (SAST, quality gate)
+#   web ──────┤
+#   iac ──────┤
+#   imagens ──┴─▶ (PR) terraform plan      ← só com o AWS Academy ligado
+#                 (main) terraform apply → push ECR → deploy no EKS
+#
+# Todas as actions de terceiros estão fixadas pelo SHA do commit (não pela tag): uma tag
+# pode ser movida para código malicioso, um SHA não (ataque de supply chain).
+
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "22"
+  TERRAFORM_VERSION: "1.17.2"
+  CHECKOV_VERSION: "3.4.6"
+
+jobs:
+  # ---------------------------------------------------------------- SEC-82
+  segredos:
+    name: Segredos (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # varre o histórico inteiro, não só o último commit
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  # ------------------------------------------------- testes + lint + SCA (API)
+  api:
+    name: API (lint, testes, npm audit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/api
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cryptidwatch
+          POSTGRES_PASSWORD: cryptidwatch
+          POSTGRES_DB: cryptidwatch_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U cryptidwatch"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://cryptidwatch:cryptidwatch@localhost:5432/cryptidwatch_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/api/package-lock.json
+      - run: npm ci --no-fund
+      - name: SCA - npm audit (SEC-83)
+        run: npm audit --audit-level=high
+      - name: Lint (ESLint + eslint-plugin-security)
+        run: npm run lint
+      - name: Testes ligados aos SEC-xx
+        run: npm run test:coverage
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: api-coverage
+          path: app/api/coverage/lcov.info
+          retention-days: 7
+
+  # ------------------------------------------------- lint + build + SCA (web)
+  web:
+    name: Web (lint, build, npm audit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/web
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/web/package-lock.json
+      - run: npm ci --no-fund
+      - name: SCA - npm audit (SEC-83)
+        run: npm audit --audit-level=high
+      - name: Lint (inclui react/no-danger, SEC-101)
+        run: npm run lint
+      - run: npm run build
+
+  # ---------------------------------------------------------- SAST (SEC-81)
+  sonarcloud:
+    name: SAST (SonarCloud)
+    needs: [api]
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # o Sonar usa o histórico para saber o que é código novo
+      - name: Verifica o token
+        id: token
+        run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "::warning title=SonarCloud não configurado::Crie o secret SONAR_TOKEN (veja docs/pipeline.md)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: steps.token.outputs.ok == 'true'
+        with:
+          name: api-coverage
+          path: app/api/coverage
+      - name: Análise + quality gate (barra o merge se reprovar)
+        if: steps.token.outputs.ok == 'true'
+        uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
+        env:
+          SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          args: >
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
+
+  # -------------------------------------------- IaC: Terraform + Kubernetes
+  iac:
+    name: IaC (terraform validate, checkov, kubeconform)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      - name: terraform fmt
+        run: terraform fmt -check -recursive infra/terraform
+      - name: terraform validate
+        run: |
+          for dir in infra/terraform infra/terraform/bootstrap; do
+            terraform -chdir="$dir" init -backend=false -input=false >/dev/null
+            terraform -chdir="$dir" validate
+          done
+      - name: Checkov (SEC-85)
+        run: |
+          pip install --quiet "checkov==${CHECKOV_VERSION}"
+          checkov -d infra/terraform --framework terraform --quiet --compact
+          checkov -d k8s --framework kubernetes --quiet --compact
+      - name: kubeconform
+        run: >
+          docker run --rm -v "$PWD/k8s:/k8s" ghcr.io/yannh/kubeconform:v0.8.0
+          -strict -summary -ignore-filename-pattern kustomization /k8s
+      - name: shellcheck
+        run: shellcheck scripts/*.sh
+
+  # ------------------------------------------ build + scan de imagem (Trivy)
+  imagens:
+    name: Imagem ${{ matrix.app }} (build + Trivy)
+    needs: [api, web]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [api, web]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: docker build
+        run: docker build -t "cryptidwatch-${{ matrix.app }}:${{ github.sha }}" "app/${{ matrix.app }}"
+      - name: Trivy - vulnerabilidades HIGH/CRITICAL com correção falham o job (SEC-83)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: cryptidwatch-${{ matrix.app }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+  # ------------------------------------------------------- AWS (SEC-85)
+  # Só roda com o laboratório ligado: variável AWS_DEPLOY_ENABLED = true e os secrets da
+  # sessão do AWS Academy atualizados (expiram em ~4 h). Sem isso, os jobs são pulados.
+  terraform-plan:
+    name: Terraform plan (PR)
+    if: github.event_name == 'pull_request' && vars.AWS_DEPLOY_ENABLED == 'true'
+    needs: [segredos, iac]
+    runs-on: ubuntu-latest
+    environment: aws-academy
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+      - working-directory: infra/terraform
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+          terraform plan -input=false -no-color
+
+  deploy:
+    name: Terraform apply + deploy no EKS (main)
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ENABLED == 'true'
+    needs: [segredos, api, web, sonarcloud, iac, imagens]
+    runs-on: ubuntu-latest
+    environment: aws-academy
+    concurrency:
+      group: deploy-aws
+      cancel-in-progress: false # nunca interrompe um apply no meio
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false # os scripts leem `terraform output` puro
+      - name: terraform apply
+        working-directory: infra/terraform
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+          terraform apply -input=false -auto-approve
+      - name: Push das imagens para o ECR
+        run: scripts/push-images.sh
+      - name: Deploy no EKS
+        run: scripts/deploy.sh

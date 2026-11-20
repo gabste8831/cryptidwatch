@@ -4,8 +4,13 @@ Trabalho final de "Auditoria e Segurança de Sistemas" (UNIDAVI, SI).
 O diagrama de arquitetura (parte 1, 2 pontos) já foi entregue: `docs/arquitetura.jpg`.
 Agora é a implementação completa na AWS.
 
-## Commits
-Sem linha "Co-Authored-By" nem qualquer atribuição ao Claude (pedido do usuário).
+## Commits e GitHub
+- Sem linha "Co-Authored-By" nem qualquer atribuição ao Claude (pedido do usuário).
+- Repositório público: https://github.com/gabste8831/cryptidwatch (perfil pessoal).
+  **Nunca mexer na organização "ale tech corporation"**: sempre `gabste8831/...` explícito no gh.
+- `main` protegida: só por PR (0 aprovações, histórico linear, sem force push/exclusão).
+  Os status checks obrigatórios entram quando a pipeline existir. Dependabot ligado.
+- gitleaks com `.gitleaks.toml` (exceção só para `.env.example`).
 
 ## Avaliação
 - 4 pontos: apresentação individual
