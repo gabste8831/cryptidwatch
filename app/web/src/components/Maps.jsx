@@ -1,4 +1,5 @@
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import { useEffect } from 'react';
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Link } from 'react-router';
 import { caseNumber } from '../lib/format.js';
@@ -11,6 +12,13 @@ const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">Op
 const pin = L.divIcon({ className: '', html: '<div class="pin"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
 // Círculo "feito à caneta" em volta do local, como numa investigação.
 const circled = L.divIcon({ className: '', html: '<div class="pin-circle"></div>', iconSize: [54, 54], iconAnchor: [27, 27] });
+
+/** Tira o "Leaflet" da atribuição; o crédito do OpenStreetMap (exigido pela licença) fica. */
+function OsmCreditOnly() {
+  const map = useMap();
+  useEffect(() => { map.attributionControl?.setPrefix(false); }, [map]);
+  return null;
+}
 
 /** Mapa pequeno do local do avistamento, como um recorte colado na ficha. */
 export function RadarMap({ lat, lng }) {
@@ -41,6 +49,7 @@ export function CasesMap({ items }) {
       <span className="tape tape-tr" aria-hidden="true" />
       <MapContainer center={[-14.5, -51]} zoom={4} scrollWheelZoom={false} minZoom={3}>
         <TileLayer url={TILES} attribution={ATTRIBUTION} />
+        <OsmCreditOnly />
         {pts.map((s) => (
           <Marker key={s.id} position={[s.latitude, s.longitude]} icon={pin}>
             <Popup>
