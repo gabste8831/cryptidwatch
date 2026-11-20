@@ -60,8 +60,12 @@ repositórios do ECR e o `app_config` que vai para o ConfigMap da API.
 ## Derrubar tudo (sempre depois de testar)
 
 ```bash
-terraform destroy
+scripts/destroy.sh
 ```
+
+Ele esvazia os buckets de fotos e de logs antes do `terraform destroy`, porque os buckets
+são criados via CloudFormation e ele só apaga bucket vazio (restrição do Learner Lab,
+detalhada em `modules/s3-bucket-cfn`). Pelo GitHub: **Actions → Destruir infraestrutura**.
 
 O bucket de estado do bootstrap fica (é barato e guarda o histórico). Para remover também:
 esvazie o bucket e rode `terraform destroy` em `bootstrap/`.
@@ -72,7 +76,7 @@ esvazie o bucket e rode `terraform destroy` em `bootstrap/`.
 docker run --rm -v "$(pwd):/tf" bridgecrew/checkov -d /tf --framework terraform --compact
 ```
 
-Resultado atual: 168 aprovadas, 0 falhas, 45 exceções justificadas. Veja
+Resultado atual: 134 aprovadas, 0 falhas, 35 exceções justificadas. Veja
 [docs/riscos-aceitos.md](../../docs/riscos-aceitos.md).
 
 ## Terraform pelo Docker (sem instalar)
@@ -85,6 +89,10 @@ docker run --rm -it -v "${PWD}:/src" -v "$HOME/.aws:/root/.aws:ro" -w /src hashi
 
 ## Particularidades do Learner Lab
 
+- **Buckets via CloudFormation:** uma SCP nega `s3:GetBucketObjectLockConfiguration`, que o
+  `aws_s3_bucket` do provider sempre lê. Os buckets são criados por `modules/s3-bucket-cfn`.
+- **Versão do EKS:** use só versão em suporte padrão; em suporte estendido o plano de
+  controle custa US$ 0,60/h em vez de 0,10.
 - **Sem criar roles:** cluster, nós e flow logs usam a `LabRole` existente.
 - **Sem IRSA:** não há AWS Load Balancer Controller. O Terraform cria o ALB e os target
   groups apontam para os nós nos NodePorts fixos `30080` (web) e `30300` (api).

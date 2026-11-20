@@ -39,33 +39,16 @@ resource "aws_acm_certificate" "this" {
 data "aws_caller_identity" "current" {}
 data "aws_elb_service_account" "this" {}
 
-resource "aws_s3_bucket" "alb_logs" {
-  #checkov:skip=CKV_AWS_144:Replicação entre regiões fora do escopo do laboratório
-  #checkov:skip=CKV2_AWS_62:Sem consumidores de eventos para os logs
-  #checkov:skip=CKV_AWS_145:O ALB só grava em bucket com SSE-S3 (não aceita KMS)
-  #checkov:skip=CKV_AWS_18:É o próprio bucket de logs
-  #checkov:skip=CKV_AWS_21:Logs não são sobrescritos; versionamento só aumentaria custo
-  bucket        = "${var.name}-alb-logs-${data.aws_caller_identity.current.account_id}"
-  force_destroy = true
-}
-
-resource "aws_s3_bucket_public_access_block" "alb_logs" {
-  bucket                  = aws_s3_bucket.alb_logs.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs" {
-  bucket = aws_s3_bucket.alb_logs.id
-  rule {
-    apply_server_side_encryption_by_default { sse_algorithm = "AES256" }
-  }
+# Criado via CloudFormation por causa da restrição do Learner Lab (ver modules/s3-bucket-cfn).
+# Já nasce com SSE-S3 (o ALB não aceita KMS) e sem acesso público.
+module "alb_logs" {
+  source      = "../s3-bucket-cfn"
+  name        = "${var.name}-alb-logs-${data.aws_caller_identity.current.account_id}"
+  description = "Logs de acesso do ALB do CryptidWatch"
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
-  bucket = aws_s3_bucket.alb_logs.id
+  bucket = module.alb_logs.name
   rule {
     id     = "expira-logs"
     status = "Enabled"
@@ -76,7 +59,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
 }
 
 resource "aws_s3_bucket_policy" "alb_logs" {
-  bucket = aws_s3_bucket.alb_logs.id
+  bucket = module.alb_logs.name
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -85,19 +68,18 @@ resource "aws_s3_bucket_policy" "alb_logs" {
         Effect    = "Allow"
         Principal = { AWS = data.aws_elb_service_account.this.arn }
         Action    = "s3:PutObject"
-        Resource  = "${aws_s3_bucket.alb_logs.arn}/alb/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+        Resource  = "${module.alb_logs.arn}/alb/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
       },
       {
         Sid       = "SomenteHTTPS"
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource  = [aws_s3_bucket.alb_logs.arn, "${aws_s3_bucket.alb_logs.arn}/*"]
+        Resource  = [module.alb_logs.arn, "${module.alb_logs.arn}/*"]
         Condition = { Bool = { "aws:SecureTransport" = "false" } }
       },
     ]
   })
-  depends_on = [aws_s3_bucket_public_access_block.alb_logs]
 }
 
 # ---------- ALB ----------
@@ -114,7 +96,7 @@ resource "aws_lb" "this" {
   idle_timeout               = 60
 
   access_logs {
-    bucket  = aws_s3_bucket.alb_logs.id
+    bucket  = module.alb_logs.name
     prefix  = "alb"
     enabled = true
   }

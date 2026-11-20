@@ -25,6 +25,7 @@ resource "aws_cloudwatch_log_group" "cluster" {
 resource "aws_eks_cluster" "this" {
   #checkov:skip=CKV_AWS_38:Endpoint público necessário para o runner do GitHub Actions (IP variável). Restringível por var.eks_public_access_cidrs. Ver docs/riscos-aceitos.md
   #checkov:skip=CKV_AWS_39:Mesmo motivo do CKV_AWS_38; o acesso exige credencial IAM válida
+  #checkov:skip=CKV_AWS_339:Falso positivo: a 1.36 está em suporte padrão até 2027-08 (aws eks describe-cluster-versions); a lista interna do checkov 3.4.6 é anterior a ela
   #checkov:skip=CKV_AWS_58:Nenhum segredo da aplicação fica em Secret do Kubernetes (estão no Secrets Manager)
   name     = var.name
   version  = var.kubernetes_version

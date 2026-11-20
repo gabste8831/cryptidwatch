@@ -1,7 +1,8 @@
 # Riscos aceitos (scan de IaC com checkov)
 
 O código Terraform passa pelo [checkov](https://www.checkov.io/) na pipeline (SEC-85).
-Resultado atual: **168 verificações aprovadas, 0 falhas, 45 exceções justificadas**.
+Resultado atual: **134 verificações aprovadas, 0 falhas, 35 exceções justificadas**
+(eram 168/45 antes da troca dos buckets por CloudFormation; ver "Achados do primeiro deploy").
 
 Cada exceção está marcada no próprio recurso com `#checkov:skip=<ID>:<motivo>`, então a
 justificativa fica junto do código e aparece no relatório. Elas se dividem em quatro grupos.
@@ -60,6 +61,25 @@ Resultado: **180 aprovadas, 0 falhas, 4 exceções** (anotações `checkov.io/sk
 
 Corrigidos por causa do scan: UID alto (10001/10101, testado com filesystem só leitura e sem
 capabilities) e `imagePullPolicy: Always`.
+
+## Achados do primeiro deploy no AWS Academy
+
+**Buckets S3 via CloudFormation.** Uma SCP da organização do Learner Lab nega
+`s3:GetBucketObjectLockConfiguration`, e o recurso `aws_s3_bucket` do provider da AWS faz
+essa leitura logo após criar qualquer bucket, tratando o "acesso negado" como erro fatal. Os
+três buckets (estado, fotos e logs do ALB) passaram a ser criados por uma stack do
+CloudFormation gerenciada pelo Terraform (`modules/s3-bucket-cfn`), já com SSE-S3, bloqueio
+de acesso público e ACLs desligadas. Ciclo de vida, CORS e políticas continuam em recursos
+`aws_s3_bucket_*`. Consequências:
+
+- As verificações do checkov que olham o recurso `aws_s3_bucket` (replicação, versionamento,
+  logs de acesso, KMS) deixam de se aplicar; os mesmos riscos continuam aceitos pelos motivos
+  da seção 2 e 3. A stack tem uma exceção (CKV_AWS_124, notificação de eventos via SNS).
+- O CloudFormation só apaga bucket vazio, então o `scripts/destroy.sh` esvazia os buckets antes.
+
+**Versão do EKS.** A 1.33 já estava em suporte estendido (US$ 0,60/h no plano de controle, 6×
+mais caro). O padrão passou para a 1.36, em suporte padrão até 2027-08. O checkov 3.4.6 ainda
+não conhece essa versão (CKV_AWS_339, falso positivo justificado no código).
 
 ## Corrigido por causa do scan
 
