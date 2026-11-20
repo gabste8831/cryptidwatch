@@ -81,14 +81,34 @@ critérios de aceite que viram testes. Testes devem citar o SEC-xx no nome
 ## Ambiente local (Windows)
 - Instalados: git, Node 24, Docker. **Faltam:** Terraform e AWS CLI.
 - Pasta fica fora do OneDrive de propósito (node_modules/.terraform quebram a sincronização).
-- `docker compose up -d` na raiz sobe Postgres (porta **5433** no host, porque a 5432
-  está ocupada por um Postgres instalado no Windows), Redis e MinIO.
+- `docker compose up -d postgres redis s3 s3-init` sobe as dependências. Portas no host:
+  Postgres **5433** e Redis **6380** (5432/6379 estão ocupadas por serviços instalados no
+  Windows), S3 local (SeaweedFS) **8333**.
+- `docker compose --profile app up -d --build` sobe também API e web em containers:
+  site em http://localhost:8080.
+- S3 local = SeaweedFS (MinIO e LocalStack não têm mais imagem gratuita). Precisa da
+  identidade em `app/api/dev/s3.json` para aceitar URLs assinadas e não aceita o cabeçalho
+  SSE (por isso `storage.js` só manda SSE quando não há `S3_ENDPOINT`).
 - Docker Desktop pode estar fechado: abra antes de rodar o compose.
+- Dev sem containers: `npm run dev` em `app/api` (usa `.env`, porta 3000) e em `app/web`
+  (Vite 5173, proxy de /api). Moderador local: ver `SEED_MODERATOR_*` no `.env`.
+
+## Frontend (`app/web`) — pronto
+- Direção visual: "arquivo confidencial" (dossiê, máquina de escrever, carimbos, tarjas)
+  + pôster de mundo aberto ao pôr do sol (tipografia condensada Anton, degradê laranja/rosa/roxo,
+  estrelas de "procurado" = credibilidade, minimapa redondo tipo radar, cartazes de "procura-se",
+  toast tipo mensagem de celular, faixa de "missão cumprida"). Tudo original: nada de logo,
+  fonte ou arte de jogo existente.
+- React 19 + react-router 7 + Leaflet (tiles OSM escurecidos por CSS) + lucide-react.
+  Fontes via @fontsource (sem CDN, CSP fechada).
+- Nginx `nginx-unprivileged` com CSP/HSTS etc. em `app/web/nginx/default.conf.template`
+  (envsubst de `PHOTO_ORIGIN` e `API_UPSTREAM`).
 
 ## API (`app/api`) — pronta
 - ESM, Express 5, zod 4, sharp 0.35, vitest 5. Dependências injetadas em `createApp(deps)`:
   testes usam Postgres real (`cryptidwatch_test`) + S3/Redis em memória.
-- 56 testes, cobertura ~86%, `npm audit` limpo, ESLint com eslint-plugin-security.
+- 69 testes, `npm audit` limpo, ESLint com eslint-plugin-security.
+- Comentários com denúncia (3 denúncias ocultam) e credibilidade 1–5 dada na aprovação.
 - Moderador só via `npm run seed` (SEED_MODERATOR_EMAIL/PASSWORD).
 - Segredos em produção: `APP_SECRET_ID` → JSON no Secrets Manager com
   `JWT_SECRET`, `DB_PASSWORD`, `REDIS_AUTH_TOKEN`.
@@ -96,7 +116,7 @@ critérios de aceite que viram testes. Testes devem citar o SEC-xx no nome
 ## Próximos passos
 1. ~~Estrutura do repo + specs~~
 2. ~~API (Express) + testes~~
-3. Web (React) + Dockerfiles + docker-compose para rodar local
+3. ~~Web (React) + Dockerfiles + docker-compose para rodar local~~
 4. Terraform: backend S3, VPC, EKS, ALB+WAF+ACM, RDS, Redis, S3, ECR
 5. Manifests k8s + NetworkPolicy
 6. Workflow do GitHub Actions + SonarCloud

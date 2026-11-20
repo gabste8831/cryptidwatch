@@ -10,6 +10,7 @@ import { authRoutes } from './routes/auth.js';
 import { sightingRoutes } from './routes/sightings.js';
 import { photoRoutes } from './routes/photos.js';
 import { moderationRoutes } from './routes/moderation.js';
+import { commentRoutes } from './routes/comments.js';
 
 /**
  * Monta a aplicação. As dependências (banco, storage, cache, rate limit) são injetadas,
@@ -74,6 +75,19 @@ export function createApp(deps) {
     res.json(await getRanking({ ...deps, log: req.log }));
   });
 
+  // Números do painel da home.
+  app.get('/api/stats', async (_req, res) => {
+    const { rows: [s] } = await db.query(
+      `SELECT COUNT(*) FILTER (WHERE status = 'aprovado')::int AS casos,
+              COUNT(*) FILTER (WHERE status = 'aprovado' AND created_at > now() - interval '30 days')::int AS casos_30d,
+              COUNT(DISTINCT cryptid_id) FILTER (WHERE status = 'aprovado')::int AS criptideos,
+              COUNT(DISTINCT uf) FILTER (WHERE status = 'aprovado')::int AS estados
+         FROM sightings`,
+    );
+    res.json({ cases: s.casos, cases30d: s.casos_30d, cryptids: s.criptideos, states: s.estados });
+  });
+
+  app.use('/api', commentRoutes(deps));
   app.use('/api/auth', authRoutes(deps));
   app.use('/api/sightings', sightingRoutes(deps));
   app.use('/api', photoRoutes(deps));

@@ -16,6 +16,8 @@ Cada feature tem uma spec com:
 | [05-ranking.md](05-ranking.md) | SEC-50 a SEC-52 |
 | [06-infraestrutura.md](06-infraestrutura.md) | SEC-60 a SEC-72 |
 | [07-pipeline.md](07-pipeline.md) | SEC-80 a SEC-85 |
+| [08-comentarios.md](08-comentarios.md) | SEC-90 a SEC-95 |
+| [09-frontend.md](09-frontend.md) | SEC-100 a SEC-104 |
 
 ## Requisitos transversais
 

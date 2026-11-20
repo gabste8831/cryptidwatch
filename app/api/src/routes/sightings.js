@@ -8,8 +8,9 @@ import {
 
 const SIGHTING_COLUMNS = `
   s.id, s.title, s.description, s.city, s.uf, s.latitude, s.longitude,
-  to_char(s.seen_at, 'YYYY-MM-DD') AS seen_at, s.status, s.reject_reason, s.created_at,
-  s.author_id, u.name AS author_name, c.id AS cryptid_id, c.slug AS cryptid_slug, c.name AS cryptid_name`;
+  to_char(s.seen_at, 'YYYY-MM-DD') AS seen_at, s.status, s.reject_reason, s.credibility, s.created_at,
+  s.author_id, u.name AS author_name, c.id AS cryptid_id, c.slug AS cryptid_slug, c.name AS cryptid_name,
+  (SELECT COUNT(*)::int FROM comments cm WHERE cm.sighting_id = s.id AND cm.status = 'visivel') AS comment_count`;
 
 const SIGHTING_FROM = `
   FROM sightings s
@@ -28,6 +29,8 @@ export function toSighting(r) {
     seenAt: r.seen_at,
     status: r.status,
     rejectReason: r.reject_reason,
+    credibility: r.credibility ?? null,
+    commentCount: r.comment_count ?? 0,
     createdAt: r.created_at,
     author: { id: r.author_id, name: r.author_name },
     cryptid: { id: r.cryptid_id, slug: r.cryptid_slug, name: r.cryptid_name },
@@ -65,7 +68,7 @@ export function sightingRoutes({ db, config, storage, rateStore }) {
     if (q.to) where.push(`s.seen_at <= ${param(q.to)}`);
 
     // Coluna e direção vêm de listas fechadas, nunca do texto do usuário.
-    const orderBy = `${SORT_COLUMNS[q.sort]} ${q.order === 'asc' ? 'ASC' : 'DESC'}, s.id`;
+    const orderBy = `${SORT_COLUMNS[q.sort]} ${q.order === 'asc' ? 'ASC' : 'DESC'} NULLS LAST, s.id`;
     const limit = param(q.limit);
     const offset = param((q.page - 1) * q.limit);
 

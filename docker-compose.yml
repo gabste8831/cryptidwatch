@@ -1,5 +1,6 @@
-# Ambiente local: dependências da API (Postgres, Redis, MinIO no lugar do S3).
-#   docker compose up -d
+# Ambiente local completo: Postgres, Redis, SeaweedFS (S3 local), API e web.
+#   docker compose up -d postgres redis s3 s3-init   # só as dependências (para npm run dev)
+#   docker compose up -d --build                      # tudo, inclusive API e web em containers
 # As credenciais abaixo são só para desenvolvimento local.
 services:
   postgres:
@@ -20,18 +21,57 @@ services:
   redis:
     image: redis:7-alpine
     command: ["redis-server", "--requirepass", "redis-local-dev"]
-    ports: ["127.0.0.1:6379:6379"]
+    ports: ["127.0.0.1:6380:6379"] # 6380 no host: a 6379 pode estar ocupada por um Redis instalado
 
-  minio:
-    image: minio/minio:latest
-    command: ["server", "/data", "--console-address", ":9001"]
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
+  # S3 local. (MinIO e LocalStack deixaram de ter imagem pública gratuita.)
+  s3:
+    image: chrislusf/seaweedfs:latest
+    # Com uma identidade configurada, o SeaweedFS valida as assinaturas (URLs pré-assinadas
+    # e a política do POST), como o S3 de verdade. Sem ela, nega as requisições assinadas.
+    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json"]
+    ports: ["127.0.0.1:8333:8333"]
     volumes:
-      - miniodata:/data
+      - s3data:/data
+      - ./app/api/dev/s3.json:/etc/seaweedfs/s3.json:ro
+
+  # Cria o bucket de fotos (o equivalente local do bucket privado do Terraform).
+  s3-init:
+    image: chrislusf/seaweedfs:latest
+    depends_on: [s3]
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+      until echo 's3.bucket.list' | weed shell -master=s3:9333 >/dev/null 2>&1; do sleep 2; done;
+      echo 's3.bucket.create -name cryptidwatch-fotos' | weed shell -master=s3:9333 || true"
+
+  api:
+    build: ./app/api
+    profiles: ["app"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      COOKIE_SECURE: "false"   # local sem HTTPS; na AWS fica true (padrão)
+      TRUST_PROXY: "1"
+      JWT_SECRET: segredo-local-do-docker-compose-com-mais-de-32-bytes
+      DATABASE_URL: postgres://cryptidwatch:cryptidwatch@postgres:5432/cryptidwatch
+      REDIS_HOST: redis
+      REDIS_AUTH_TOKEN: redis-local-dev
+      S3_BUCKET: cryptidwatch-fotos
+      S3_ENDPOINT: http://s3:8333
+      S3_PUBLIC_ENDPOINT: http://localhost:8333
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+
+  web:
+    build: ./app/web
+    profiles: ["app"]
+    environment:
+      API_UPSTREAM: http://api:3000
+      PHOTO_ORIGIN: http://localhost:8333
+    depends_on: [api]
+    ports: ["127.0.0.1:8080:8080"]
 
 volumes:
   pgdata:
-  miniodata:
+  s3data:

@@ -37,6 +37,30 @@ CREATE TABLE IF NOT EXISTS sightings (
 CREATE INDEX IF NOT EXISTS sightings_status_seen_idx ON sightings (status, seen_at DESC);
 CREATE INDEX IF NOT EXISTS sightings_author_idx ON sightings (author_id);
 
+-- Nível de credibilidade dado pelo moderador na aprovação (1 a 5 estrelas, inspirado nas classes do BFRO).
+ALTER TABLE sightings ADD COLUMN IF NOT EXISTS credibility smallint CHECK (credibility BETWEEN 1 AND 5);
+
+-- SEC-90..95: comentários com pós-moderação por denúncia.
+CREATE TABLE IF NOT EXISTS comments (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  sighting_id uuid NOT NULL REFERENCES sightings(id) ON DELETE CASCADE,
+  author_id   uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body        text NOT NULL,
+  status      text NOT NULL DEFAULT 'visivel' CHECK (status IN ('visivel', 'oculto', 'removido')),
+  removed_by  uuid REFERENCES users(id),
+  removed_at  timestamptz,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS comments_sighting_idx ON comments (sighting_id, created_at);
+
+CREATE TABLE IF NOT EXISTS comment_reports (
+  comment_id  uuid NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
+  reporter_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reason      text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (comment_id, reporter_id)  -- SEC-94: uma denúncia por pessoa
+);
+
 -- SEC-36: o banco guarda só metadados; o arquivo fica no S3.
 CREATE TABLE IF NOT EXISTS photos (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),

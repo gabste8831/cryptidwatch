@@ -53,7 +53,9 @@ export function createS3Storage({ bucket, region, endpoint, publicEndpoint }) {
         Key: key,
         Body: body,
         ContentType: contentType,
-        ServerSideEncryption: 'AES256',
+        // Na AWS o bucket também tem criptografia padrão (Terraform, SEC-34). O S3 local
+        // (SeaweedFS) não aceita esse cabeçalho, então só vai quando é o S3 de verdade.
+        ...(endpoint ? {} : { ServerSideEncryption: 'AES256' }),
       }));
     },
 

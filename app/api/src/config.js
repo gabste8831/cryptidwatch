@@ -77,6 +77,7 @@ export function buildConfig(env) {
       login: { max: Number(env.RL_LOGIN_MAX || 5), windowMs: 60_000 },            // SEC-16
       register: { max: Number(env.RL_REGISTER_MAX || 20), windowMs: 3_600_000 },
       sightings: { max: Number(env.RL_SIGHTINGS_MAX || 10), windowMs: 3_600_000 }, // SEC-02
+      comments: { max: Number(env.RL_COMMENTS_MAX || 20), windowMs: 3_600_000 },   // SEC-91
     },
   };
 }

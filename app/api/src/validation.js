@@ -41,7 +41,9 @@ export const updateSightingSchema = z.object(sightingFields).partial().strict()
   .refine((o) => Object.keys(o).length > 0, 'nada para atualizar');
 
 // SEC-01: ordenação só por colunas de uma lista fechada. SEC-24: no máximo 50 por página.
-export const SORT_COLUMNS = { seen_at: 's.seen_at', created_at: 's.created_at', title: 's.title' };
+export const SORT_COLUMNS = {
+  seen_at: 's.seen_at', created_at: 's.created_at', title: 's.title', credibility: 's.credibility',
+};
 
 export const listSightingsQuery = z.object({
   q: z.string().trim().max(100).optional(),
@@ -62,6 +64,19 @@ export const uploadUrlSchema = z.object({
 export const photoVariantQuery = z.object({
   variant: z.enum(['thumb', 'full']).default('full'),
 });
+
+export const approveSchema = z.object({
+  credibility: z.number().int().min(1).max(5).default(3),
+}).strict();
+
+// SEC-90: texto puro, 2 a 1000 caracteres.
+export const commentSchema = z.object({
+  body: z.string().trim().min(2, 'comentário muito curto').max(1000),
+}).strict();
+
+export const reportSchema = z.object({
+  reason: z.string().trim().min(3, 'informe o motivo').max(300),
+}).strict();
 
 // SEC-42: motivo obrigatório na rejeição.
 export const rejectSchema = z.object({
