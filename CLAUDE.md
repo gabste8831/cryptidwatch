@@ -113,11 +113,21 @@ critérios de aceite que viram testes. Testes devem citar o SEC-xx no nome
 - Segredos em produção: `APP_SECRET_ID` → JSON no Secrets Manager com
   `JWT_SECRET`, `DB_PASSWORD`, `REDIS_AUTH_TOKEN`.
 
+## Terraform (`infra/terraform`) — escrito e validado, ainda não aplicado na AWS
+- Provider AWS ~> 6.0, Terraform ≥ 1.10, backend S3 com `use_lockfile` (bucket vem do
+  `bootstrap/`, nome passado em `-backend-config`).
+- NodePorts fixos: web 30080, api 30300 (os manifests do k8s precisam usar os mesmos).
+- `terraform output app_config` → valores do ConfigMap da API (DB_HOST, REDIS_HOST,
+  S3_BUCKET, APP_SECRET_ID, PHOTO_ORIGIN...). O segredo `cryptidwatch/app` tem
+  DB_PASSWORD, REDIS_AUTH_TOKEN e JWT_SECRET.
+- Validação local sem instalar: `docker run hashicorp/terraform` e `bridgecrew/checkov`.
+  checkov: 168 ok, 0 falhas, 45 skips justificados (docs/riscos-aceitos.md).
+
 ## Próximos passos
 1. ~~Estrutura do repo + specs~~
 2. ~~API (Express) + testes~~
 3. ~~Web (React) + Dockerfiles + docker-compose para rodar local~~
-4. Terraform: backend S3, VPC, EKS, ALB+WAF+ACM, RDS, Redis, S3, ECR
+4. ~~Terraform: backend S3, VPC, EKS, ALB+WAF+ACM, RDS, Redis, S3, ECR~~ (falta aplicar na AWS)
 5. Manifests k8s + NetworkPolicy
 6. Workflow do GitHub Actions + SonarCloud
 7. Testar o WAF (SQLi/XSS → 403) e juntar evidências para a apresentação
