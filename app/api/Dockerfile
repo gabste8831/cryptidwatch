@@ -2,7 +2,7 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 # Só dependências de produção na imagem final (menos superfície de ataque).
-RUN npm ci --omit=dev --no-audit --no-fund
+RUN npm ci --omit=dev --no-audit --no-fund --ignore-scripts
 
 FROM node:22-alpine
 ENV NODE_ENV=production \

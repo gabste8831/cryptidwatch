@@ -55,16 +55,17 @@ jobs:
     services:
       postgres:
         image: postgres:16-alpine
+        # Banco descartável que só existe dentro do runner: sem senha no código (Sonar S6698).
         env:
           POSTGRES_USER: cryptidwatch
-          POSTGRES_PASSWORD: cryptidwatch
+          POSTGRES_HOST_AUTH_METHOD: trust
           POSTGRES_DB: cryptidwatch_test
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U cryptidwatch"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      TEST_DATABASE_URL: postgres://cryptidwatch:cryptidwatch@localhost:5432/cryptidwatch_test
+      TEST_DATABASE_URL: postgres://cryptidwatch@localhost:5432/cryptidwatch_test
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -72,7 +73,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: app/api/package-lock.json
-      - run: npm ci --no-fund
+      # --ignore-scripts: nenhum pacote executa script de instalação (supply chain, Sonar S6505).
+      - run: npm ci --no-fund --ignore-scripts
       - name: SCA - npm audit (SEC-83)
         run: npm audit --audit-level=high
       - name: Lint (ESLint + eslint-plugin-security)
@@ -99,7 +101,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: app/web/package-lock.json
-      - run: npm ci --no-fund
+      - run: npm ci --no-fund --ignore-scripts
       - name: SCA - npm audit (SEC-83)
         run: npm audit --audit-level=high
       - name: Lint (inclui react/no-danger, SEC-101)
@@ -158,11 +160,13 @@ jobs:
             terraform -chdir="$dir" init -backend=false -input=false >/dev/null
             terraform -chdir="$dir" validate
           done
+      # Pela imagem oficial, sem pip (o pip pode executar setup.py de pacotes: Sonar S8541).
       - name: Checkov (SEC-85)
         run: |
-          pip install --quiet "checkov==${CHECKOV_VERSION}"
-          checkov -d infra/terraform --framework terraform --quiet --compact
-          checkov -d k8s --framework kubernetes --quiet --compact
+          docker run --rm -v "$PWD:/repo" "bridgecrew/checkov:${CHECKOV_VERSION}" \
+            -d /repo/infra/terraform --framework terraform --quiet --compact
+          docker run --rm -v "$PWD:/repo" "bridgecrew/checkov:${CHECKOV_VERSION}" \
+            -d /repo/k8s --framework kubernetes --quiet --compact
       - name: kubeconform
         run: >
           docker run --rm -v "$PWD/k8s:/k8s" ghcr.io/yannh/kubeconform:v0.8.0
