@@ -86,3 +86,37 @@ head bumps (ET de Varginha) / Mapinguari, giant one-eyed sloth-like Amazon creat
 mouth on its belly / Boitatá, a fire serpent / Curupira, forest guardian boy with backward feet
 and red hair / werewolf / headless mule breathing fire from its neck / Mothman with red eyes /
 Loch Ness monster.
+
+## Rodada 2: casos absurdos (estilo "câmera de segurança do dia a dia")
+
+Sem marcas reais nos prompts (o site é público): peça objetos genéricos.
+
+### `pe-grande-tenis.jpg` — "Pé-Grande tentou calçar o tênis do meu filho na varanda" (Joinville/SC)
+
+```
+Smart doorbell camera footage at 4 a.m., strong fisheye lens, looking down at the front porch of a simple Brazilian house with a tiled floor and a doormat. A huge hairy Bigfoot is sitting on the porch step, struggling to squeeze his enormous foot into a white and red high-top basketball sneaker that is far too small, the other sneaker lying on the doormat, a potted plant and flip-flops nearby. Night vision, grainy, slightly washed out, motion blur on his hands, found footage, absurd but realistic. Generic unbranded sneaker, no logos. Small timestamp overlay in the corner reading "23/08/2025 04:02". No other text. Landscape 3:2.
+```
+
+### `mothman-poste.jpg` — "Homem-mariposa sentado no poste da esquina" (Duque de Caxias/RJ)
+
+```
+Grainy residential street security camera at night in a Brazilian suburb. A tall dark winged creature with large glowing red eyes is perched on top of a concrete utility pole, wings folded, right in the middle of a chaotic tangle of electrical and internet cables, a flickering street lamp below, low brick walls and a parked motorcycle on the street. Infrared, heavy noise, low resolution, monochrome with the red eyes slightly glowing, found footage, unsettling but absurd. Small timestamp overlay in the corner reading "30/05/2025 00:47". No other text. Landscape 3:2.
+```
+
+### `curupira-radar.jpg` — "Radar da BR-101 multou o Curupira a 112 km/h" (Itajaí/SC)
+
+```
+Brazilian highway speed camera photo at night, high angle from the radar pole, flash-lit. On the road shoulder a small boy with wild bright red hair is running extremely fast, motion blurred, his feet clearly turned backwards, leaves flying behind him, lane markings and a guard rail visible, dense forest on the side of the road. Black and white speed camera image with a data strip at the bottom showing "BR-101 KM 112 · 112 KM/H · VEL. PERMITIDA 80 KM/H · 11/04/2025 23:31". Grainy, high contrast, found footage, absurd but realistic. No other text. Landscape 3:2.
+```
+
+### `lobisomem-petshop.jpg` — "Cliente da meia-noite no banho e tosa" (Lages/SC)
+
+```
+Pet grooming shop security camera at midnight, wide angle from a ceiling corner. A huge werewolf standing on two legs inside the stainless steel grooming tub, fur soaking wet and foamy, holding a hair dryer to dry himself, shampoo bottles and grooming tools on the shelves, a small red ribbon bow on his head, the door in the background broken open, full moon visible through the shop window. CCTV still frame, fisheye distortion, grainy, low resolution, washed out colors, found footage, absurd but realistic. Generic unbranded products. Small timestamp overlay in the corner reading "07/10/2025 00:13". No other text. Landscape 3:2.
+```
+
+### `nessie-pedalinho.jpg` — "Pescoço comprido entre os pedalinhos de cisne" (Curitiba/PR)
+
+```
+Old amateur photo taken from the shore of a city park lake in southern Brazil at dusk. Several white swan-shaped paddle boats are floating empty on the lake, and among them rises a long dark neck and small head of a plesiosaur-like creature, almost the same height as the swan boats' necks but clearly not a boat, ripples around it, a park guard on the shore blowing a whistle and pointing. Grainy, low resolution, slightly blurry, faded colors, found footage, absurd but realistic. Small date stamp in the corner reading "28/09/2025". No other text. Landscape 3:2.
+```
