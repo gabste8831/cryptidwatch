@@ -31,8 +31,9 @@ variable "node_count" {
 }
 
 variable "eks_version" {
-  type    = string
-  default = "1.33"
+  description = "Use sempre uma versão em suporte PADRÃO: em suporte estendido o plano de controle custa 6x mais (US$ 0,60/h). Confira com: aws eks describe-cluster-versions"
+  type        = string
+  default     = "1.36"
 }
 
 variable "eks_public_access_cidrs" {

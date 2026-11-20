@@ -23,8 +23,9 @@ resource "aws_db_parameter_group" "this" {
   family = "postgres16"
 
   parameter {
-    name  = "rds.force_ssl" # recusa qualquer conexão sem TLS
-    value = "1"
+    name         = "rds.force_ssl" # recusa qualquer conexão sem TLS
+    value        = "1"
+    apply_method = "pending-reboot" # parâmetro estático: vale desde a criação da instância
   }
   parameter {
     name  = "log_connections"

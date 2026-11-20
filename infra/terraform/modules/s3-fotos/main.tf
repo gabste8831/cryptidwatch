@@ -8,39 +8,18 @@ variable "allowed_origins" {
 
 data "aws_caller_identity" "current" {}
 
-resource "aws_s3_bucket" "photos" {
-  #checkov:skip=CKV_AWS_144:Replicação entre regiões fora do escopo do laboratório
-  #checkov:skip=CKV2_AWS_62:O processamento das fotos é síncrono na API (/confirm), sem eventos
-  #checkov:skip=CKV_AWS_21:Objetos nunca são sobrescritos (chave = UUID); versionamento só aumentaria custo
-  #checkov:skip=CKV_AWS_145:SSE-S3 (AES256); CMK própria fora do escopo do laboratório
-  #checkov:skip=CKV_AWS_18:Acesso auditado pela API (SHA-256 + audit_log); server access logs fora do escopo
-  bucket        = "${var.name}-fotos-${data.aws_caller_identity.current.account_id}"
-  force_destroy = true # ambiente de laboratório: o destroy apaga as fotos junto
-}
-
-resource "aws_s3_bucket_public_access_block" "photos" {
-  bucket                  = aws_s3_bucket.photos.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_ownership_controls" "photos" {
-  bucket = aws_s3_bucket.photos.id
-  rule { object_ownership = "BucketOwnerEnforced" } # desliga ACLs
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "photos" {
-  bucket = aws_s3_bucket.photos.id
-  rule {
-    apply_server_side_encryption_by_default { sse_algorithm = "AES256" }
-  }
+# Criado via CloudFormation por causa da restrição do Learner Lab (ver modules/s3-bucket-cfn).
+# Já nasce com SSE-S3, bloqueio de acesso público e ACLs desligadas.
+# Riscos aceitos do bucket (replicação, versionamento, logs de acesso): docs/riscos-aceitos.md.
+module "bucket" {
+  source      = "../s3-bucket-cfn"
+  name        = "${var.name}-fotos-${data.aws_caller_identity.current.account_id}"
+  description = "Fotos dos avistamentos (privado, acesso so por URL pre-assinada)" # sem acento: o CloudFormation grava como "?"
 }
 
 # SEC-37: o que ficou na quarentena (upload não confirmado) some em 1 dia.
 resource "aws_s3_bucket_lifecycle_configuration" "photos" {
-  bucket = aws_s3_bucket.photos.id
+  bucket = module.bucket.name
   rule {
     id     = "limpa-quarentena"
     status = "Enabled"
@@ -57,7 +36,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "photos" {
 
 # Upload direto do navegador: só POST/GET, só da origem do site.
 resource "aws_s3_bucket_cors_configuration" "photos" {
-  bucket = aws_s3_bucket.photos.id
+  bucket = module.bucket.name
   cors_rule {
     allowed_methods = ["POST", "GET"]
     allowed_origins = var.allowed_origins
@@ -67,7 +46,7 @@ resource "aws_s3_bucket_cors_configuration" "photos" {
 }
 
 resource "aws_s3_bucket_policy" "photos" {
-  bucket = aws_s3_bucket.photos.id
+  bucket = module.bucket.name
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -75,13 +54,12 @@ resource "aws_s3_bucket_policy" "photos" {
       Effect    = "Deny"
       Principal = "*"
       Action    = "s3:*"
-      Resource  = [aws_s3_bucket.photos.arn, "${aws_s3_bucket.photos.arn}/*"]
+      Resource  = [module.bucket.arn, "${module.bucket.arn}/*"]
       Condition = { Bool = { "aws:SecureTransport" = "false" } }
     }]
   })
-  depends_on = [aws_s3_bucket_public_access_block.photos]
 }
 
-output "bucket" { value = aws_s3_bucket.photos.bucket }
-output "arn" { value = aws_s3_bucket.photos.arn }
-output "regional_domain" { value = aws_s3_bucket.photos.bucket_regional_domain_name }
+output "bucket" { value = module.bucket.name }
+output "arn" { value = module.bucket.arn }
+output "regional_domain" { value = module.bucket.regional_domain }

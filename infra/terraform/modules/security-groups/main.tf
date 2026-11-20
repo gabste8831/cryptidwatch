@@ -1,4 +1,6 @@
-# Security groups em cadeia (SEC-62):
+# Security groups em cadeia (SEC-62).
+# Descrições das regras SEM acento: a API da AWS só aceita a-zA-Z0-9 e alguns símbolos.
+#
 #   internet ──80/443──▶ SG-ALB ──NodePorts──▶ SG-Nós ──5432/6379──▶ SG-Dados
 # Cada camada só aceita tráfego da camada anterior, referenciada pelo ID do SG (não por IP).
 
@@ -31,7 +33,7 @@ resource "aws_vpc_security_group_ingress_rule" "alb_https" {
 resource "aws_vpc_security_group_ingress_rule" "alb_http" {
   #checkov:skip=CKV_AWS_260:A porta 80 só responde com redirecionamento 301 para HTTPS (listener http do ALB)
   security_group_id = aws_security_group.alb.id
-  description       = "HTTP da internet (só redireciona para HTTPS)"
+  description       = "HTTP da internet (so redireciona para HTTPS)"
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "tcp"
   from_port         = 80
@@ -60,7 +62,7 @@ resource "aws_security_group" "nodes" {
 resource "aws_vpc_security_group_ingress_rule" "nodes_from_alb" {
   for_each                     = var.node_ports
   security_group_id            = aws_security_group.nodes.id
-  description                  = "NodePort ${each.key} vindo só do ALB"
+  description                  = "NodePort ${each.key} vindo so do ALB"
   referenced_security_group_id = aws_security_group.alb.id
   ip_protocol                  = "tcp"
   from_port                    = each.value
@@ -72,7 +74,7 @@ resource "aws_vpc_security_group_ingress_rule" "nodes_from_alb" {
 # liberada (o EKS precisa dela). Quem segura a saída dos pods é a NetworkPolicy (SEC-69).
 resource "aws_vpc_security_group_egress_rule" "nodes_https" {
   security_group_id = aws_security_group.nodes.id
-  description       = "HTTPS para serviços AWS e registro de imagens"
+  description       = "HTTPS para servicos AWS e registro de imagens"
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "tcp"
   from_port         = 443
@@ -126,7 +128,7 @@ resource "aws_security_group" "data" {
 
 resource "aws_vpc_security_group_ingress_rule" "data_pg" {
   security_group_id            = aws_security_group.data.id
-  description                  = "PostgreSQL só dos nós"
+  description                  = "PostgreSQL so dos nos"
   referenced_security_group_id = aws_security_group.nodes.id
   ip_protocol                  = "tcp"
   from_port                    = 5432
@@ -135,7 +137,7 @@ resource "aws_vpc_security_group_ingress_rule" "data_pg" {
 
 resource "aws_vpc_security_group_ingress_rule" "data_redis" {
   security_group_id            = aws_security_group.data.id
-  description                  = "Redis só dos nós"
+  description                  = "Redis so dos nos"
   referenced_security_group_id = aws_security_group.nodes.id
   ip_protocol                  = "tcp"
   from_port                    = 6379

@@ -34,7 +34,9 @@ jobs:
         with:
           terraform_version: "1.17.2"
           terraform_wrapper: false
-      - working-directory: infra/terraform
-        run: |
-          terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
-          terraform destroy -input=false -auto-approve
+      - name: terraform init
+        working-directory: infra/terraform
+        run: terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+      # Esvazia os buckets (o CloudFormation só apaga bucket vazio) e roda o destroy.
+      - name: Destroy
+        run: scripts/destroy.sh
