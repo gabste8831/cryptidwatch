@@ -35,7 +35,7 @@ os detalhes técnicos, as etapas e todos os prints estão no artigo
 
 ## Pessoa 3 — infraestrutura
 
-8. **Terraform.** 93 recursos, nada criado à mão; um comando recria tudo em ~25 min;
+8. **Terraform.** 88 recursos, nada criado à mão; um comando recria tudo em ~25 min;
    o ambiente foi destruído e recriado várias vezes (o DR foi testado de verdade).
 9. **Rede.** 3 camadas; dados sem rota para a internet; security groups em cadeia.
    No print: o banco dá timeout quando acessado pela internet.
