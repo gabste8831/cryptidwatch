@@ -9,7 +9,8 @@
  *
  * --insecure aceita o certificado autoassinado do ALB (só para este script).
  * Fotos ficam em docs/fotos-demo/; caso sem foto no disco é publicado sem foto.
- * Rodar de novo não duplica: casos com o mesmo título são pulados.
+ * Rodar de novo não duplica: casos com o mesmo título são pulados (inclusive a foto; para
+ * trocar fotos de casos já publicados, rode num banco limpo — na AWS ele nasce limpo).
  */
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -93,6 +94,36 @@ const CASES = [
     description: 'Domingo, fim de tarde, todo mundo dentro de casa. A câmera do quintal gravou um ser cinzento de cabeça enorme pegando a picanha da grelha e saindo pelo muro. Deixou a farofa. Registro feito para fins de seguro.',
     city: 'Blumenau', uf: 'SC', latitude: -26.9194, longitude: -49.0661, seenAt: '2025-10-12',
   },
+  {
+    by: 'cida', cryptid: 'pe-grande', credibility: 2, photo: 'pe-grande-tenis.jpg',
+    title: 'Pé-Grande tentou calçar o tênis do meu filho na varanda',
+    description: 'A campainha com câmera disparou às 4h. Era um bicho peludo enorme sentado no degrau, tentando enfiar o pé num tênis de basquete do meu filho, número 44. Não coube. Ele largou o tênis do lado do capacho e foi embora pelo terreno baldio.',
+    city: 'Joinville', uf: 'SC', latitude: -26.3045, longitude: -48.8487, seenAt: '2025-08-23',
+  },
+  {
+    by: 'valdir', cryptid: 'mothman', credibility: 2, photo: 'mothman-poste.jpg',
+    title: 'Homem-mariposa sentado no poste da esquina',
+    description: 'A câmera do condomínio filmou uma criatura com asas enormes e olhos vermelhos empoleirada no poste, bem no meio do emaranhado de fios. Ficou ali uns vinte minutos. Na mesma noite a luz da rua inteira piscou e caiu.',
+    city: 'Duque de Caxias', uf: 'RJ', latitude: -22.7856, longitude: -43.3117, seenAt: '2025-05-30',
+  },
+  {
+    by: 'trilha', cryptid: 'curupira', credibility: 3, photo: 'curupira-radar.jpg',
+    title: 'Radar da BR-101 multou o Curupira a 112 km/h',
+    description: 'Chegou uma multa de radar no nome do meu sítio. Na foto, um menino de cabelo vermelho correndo pelo acostamento, a 112 km/h, com os pés virados para trás. As pegadas na beira da estrada apontavam para o lado contrário.',
+    city: 'Itajaí', uf: 'SC', latitude: -26.9078, longitude: -48.6619, seenAt: '2025-04-11',
+  },
+  {
+    by: 'joana', cryptid: 'lobisomem', credibility: 1, photo: 'lobisomem-petshop.jpg',
+    title: 'Cliente da meia-noite no banho e tosa',
+    description: 'O pet shop amanheceu com a porta arrombada, a banheira cheia de pelo e o secador ligado. A câmera mostra um lobo enorme, de pé, se secando sozinho. Era lua cheia. Levou um laço vermelho da prateleira.',
+    city: 'Lages', uf: 'SC', latitude: -27.8157, longitude: -50.3264, seenAt: '2025-10-07',
+  },
+  {
+    by: 'marcos', cryptid: 'nessie', credibility: 2, photo: 'nessie-pedalinho.jpg',
+    title: 'Pescoço comprido entre os pedalinhos de cisne',
+    description: 'Fim de tarde no lago do parque. No meio dos pedalinhos de cisne tinha um pescoço que não era de pedalinho: mais alto, escuro e se mexendo sozinho. Ninguém estava pedalando. Ele afundou devagar quando o guarda apitou.',
+    city: 'Curitiba', uf: 'PR', latitude: -25.4284, longitude: -49.2733, seenAt: '2025-09-28',
+  },
 ];
 
 const COMMENTS = [
@@ -102,6 +133,9 @@ const COMMENTS = [
   ['Cabras atacadas no sítio', 'joana', 'Aconteceu igualzinho aqui no Goiás em 2019.'],
   ['Desenhos na soja amanheceram prontos', 'trilha', 'Vi luzes no céu na mesma madrugada, a uns 40 km dali.'],
   ['Ser cinzento levou a picanha da churrasqueira', 'joana', 'Pelo menos deixou a farofa.'],
+  ['Pé-Grande tentou calçar o tênis do meu filho na varanda', 'trilha', 'Número 44 não serve. Testemunhas dizem que ele calça 58.'],
+  ['Radar da BR-101 multou o Curupira a 112 km/h', 'cida', 'E ainda vai recorrer dizendo que estava de ré.'],
+  ['Cliente da meia-noite no banho e tosa', 'valdir', 'Pelo menos saiu cheiroso.'],
 ];
 
 // ---------- cliente HTTP com "sessão" por usuário ----------
