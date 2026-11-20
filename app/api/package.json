@@ -1,0 +1,45 @@
+{
+  "name": "cryptidwatch-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API do CryptidWatch: avistamentos de criptídeos com JWT + RBAC",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch --env-file-if-exists=.env src/server.js",
+    "seed": "node --env-file-if-exists=.env src/scripts/seed.js",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1173.0",
+    "@aws-sdk/client-secrets-manager": "^3.1173.0",
+    "@aws-sdk/s3-presigned-post": "^3.1173.0",
+    "@aws-sdk/s3-request-presigner": "^3.1173.0",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.3.0",
+    "helmet": "^8.3.0",
+    "ioredis": "^5.11.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1",
+    "pino": "^9.14.0",
+    "pino-http": "^10.5.0",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@vitest/coverage-v8": "^5.1.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-security": "^3.0.1",
+    "globals": "^17.14.0",
+    "supertest": "^7.3.2",
+    "vitest": "^5.1.1"
+  }
+}
