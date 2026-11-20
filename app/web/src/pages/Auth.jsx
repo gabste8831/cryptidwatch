@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '../lib/auth.jsx';
-import { SunsetScene } from '../components/Art.jsx';
+import { OldPhotoScene } from '../components/Art.jsx';
 
 // Só aceita voltar para caminhos internos (evita open redirect: ?voltar=https://site-malicioso).
 function safeReturn(path) {
@@ -34,19 +34,18 @@ export default function Auth({ mode }) {
   }
 
   return (
-    <div className="auth-wrap">
-      <div className="auth-art">
-        <SunsetScene />
-        <div className="auth-art-text">
-          <div className="hud">Acesso ao arquivo</div>
-          <div className="display" style={{ fontSize: 'clamp(40px, 6vw, 72px)' }}>
-            {isRegister ? 'Vire testemunha' : 'De volta à trilha'}
-          </div>
-        </div>
+    <div className="container auth-wrap">
+      <div className="auth-art" aria-hidden="true">
+        <figure className="old-photo" style={{ margin: 0 }}>
+          <span className="tape tape-tr" />
+          <div className="frame"><OldPhotoScene /></div>
+          <figcaption className="caption hand">{isRegister ? "toda testemunha começa assim" : "de volta à trilha"}</figcaption>
+        </figure>
       </div>
-      <div className="auth-form">
+      <div className="auth-form paper on-paper">
         <div>
-          <h1 className="display" style={{ fontSize: 44, marginBottom: 8 }}>{isRegister ? 'Criar conta' : 'Entrar'}</h1>
+          <p className="label" style={{ margin: 0 }}>acesso restrito ao arquivo</p>
+          <h1 className="display" style={{ fontSize: 38, margin: "6px 0 8px" }}>{isRegister ? 'Criar conta' : 'Entrar'}</h1>
           <p className="dim" style={{ marginTop: 0 }}>
             {isRegister ? 'Para reportar avistamentos e deixar depoimentos.' : 'Use seu e-mail e senha.'}
           </p>
@@ -74,8 +73,8 @@ export default function Auth({ mode }) {
           </form>
           <p className="dim" style={{ marginTop: 24 }}>
             {isRegister
-              ? <>Já tem conta? <Link to="/entrar" style={{ color: 'var(--sun-2)' }}>Entrar</Link></>
-              : <>Primeira vez aqui? <Link to="/cadastro" style={{ color: 'var(--sun-2)' }}>Criar conta</Link></>}
+              ? <>Já tem conta? <Link to="/entrar" className="blood">Entrar</Link></>
+              : <>Primeira vez aqui? <Link to="/cadastro" className="blood">Criar conta</Link></>}
           </p>
         </div>
       </div>

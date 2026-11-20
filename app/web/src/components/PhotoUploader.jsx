@@ -39,7 +39,7 @@ export function PhotoUploader({ sightingId, max = 3, onUploaded }) {
           onDrop={(e) => { e.preventDefault(); setDrag(false); handle(e.dataTransfer.files); }}
         >
           <Camera size={28} style={{ margin: '0 auto 8px' }} />
-          <div className="hud">Arraste as fotos ou clique para escolher</div>
+          <div className="label">Arraste as fotos ou clique para escolher</div>
           <div className="field-hint">JPEG, PNG ou WEBP · até 5 MB · faltam {remaining}. Metadados como GPS são removidos.</div>
           <input ref={input} type="file" accept={ALLOWED_PHOTO_TYPES.join(',')} multiple hidden
             onChange={(e) => { handle(e.target.files); e.target.value = ''; }} />

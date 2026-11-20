@@ -35,12 +35,12 @@ export default function Cases() {
   return (
     <div className="container">
       <div className="page-head">
-        <span className="section-kicker hud">Arquivo público</span>
+        <span className="section-kicker">Arquivo público</span>
         <h1 className="display section-title">Casos verificados</h1>
         <p className="dim" style={{ margin: '8px 0 0' }}>{list.data ? `${total} caso${total === 1 ? '' : 's'} encontrados` : ' '}</p>
       </div>
 
-      <form className="filters" role="search" onSubmit={(e) => { e.preventDefault(); update({ q: q.trim() }); }}>
+      <form className="filters paper on-paper" role="search" onSubmit={(e) => { e.preventDefault(); update({ q: q.trim() }); }}>
         <div className="field">
           <label htmlFor="f-q">Buscar no arquivo</label>
           <input id="f-q" className="input" value={q} maxLength={100} placeholder="Pegada, luz no céu, Varginha…"
@@ -90,7 +90,7 @@ export default function Cases() {
           )}
         </>
       ) : (
-        <Empty title="Nada no radar">Nenhum caso bate com esses filtros. Tente outra busca.</Empty>
+        <Empty title="Nada encontrado no arquivo">Nenhum caso bate com esses filtros. Tente outra busca.</Empty>
       ))}
       <div style={{ height: 64 }} />
     </div>
