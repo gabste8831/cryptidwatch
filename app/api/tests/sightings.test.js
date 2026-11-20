@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
-import { buildTestApp, cookieFor, createSighting, createUser, cryptidId, resetDb, sightingPayload } from './helpers.js';
+import { buildTestApp, cookieFor, createSighting, createUser, cryptidId, getDb, resetDb, sightingPayload } from './helpers.js';
 
 describe('Avistamentos (specs/02-avistamentos.md)', () => {
   let app;
@@ -109,6 +109,23 @@ describe('Avistamentos (specs/02-avistamentos.md)', () => {
     expect(byUf.body.items.map((s) => s.title)).toEqual(['Cabras mortas']);
     const byText = await request(app).get('/api/sightings').query({ q: 'cabras' });
     expect(byText.body.items).toHaveLength(1);
+  });
+
+  it('withPhoto=true lista só casos com foto aprovada (destaques da home)', async () => {
+    const withPhoto = await createSighting(author, { status: 'aprovado', title: 'Com foto' });
+    await createSighting(author, { status: 'aprovado', title: 'Sem foto' });
+    const pendingPhoto = await createSighting(author, { status: 'aprovado', title: 'Foto em análise' });
+    const db = await getDb();
+    await db.query(
+      `INSERT INTO photos (sighting_id, owner_id, status, object_key, thumb_key) VALUES
+         ($1, $3, 'aprovado', 'aprovadas/a.webp', 'aprovadas/a_thumb.webp'),
+         ($2, $3, 'pendente', 'aprovadas/b.webp', 'aprovadas/b_thumb.webp')`,
+      [withPhoto, pendingPhoto, author.id],
+    );
+    const res = await request(app).get('/api/sightings').query({ withPhoto: 'true' });
+    expect(res.body.items.map((s) => s.title)).toEqual(['Com foto']);
+    expect(res.body.items[0].coverUrl).toBeTruthy();
+    expect((await request(app).get('/api/sightings').query({ withPhoto: 'sim' })).status).toBe(400);
   });
 
   it('ID que não é UUID retorna 404 sem erro interno', async () => {

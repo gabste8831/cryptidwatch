@@ -51,6 +51,7 @@ export const listSightingsQuery = z.object({
   uf: z.enum(UFS).optional(),
   from: isoDate.optional(),
   to: isoDate.optional(),
+  withPhoto: z.enum(['true', 'false']).optional(), // só casos com foto aprovada (destaques da home)
   sort: z.enum(Object.keys(SORT_COLUMNS)).default('seen_at'),
   order: z.enum(['asc', 'desc']).default('desc'),
   page: z.coerce.number().int().min(1).max(10_000).default(1),

@@ -3,12 +3,14 @@ import { ArrowRight, Feather } from 'lucide-react';
 import { useApi } from '../lib/api.js';
 import { CaseCard } from '../components/CaseCard.jsx';
 import { CasesMap } from '../components/Maps.jsx';
-import { CryptidSilhouette, OldPhotoScene, WaxSeal } from '../components/Art.jsx';
+import { CryptidSilhouette, WaxSeal } from '../components/Art.jsx';
 import { Empty, ErrorBox, Loading } from '../components/States.jsx';
+import heroPhoto from '../assets/hero-pe-grande-tenis.webp';
 
 export default function Home() {
   const stats = useApi('/stats');
-  const featured = useApi('/sightings?sort=credibility&order=desc&limit=6');
+  // Destaques: os registros mais recentes que têm foto aprovada.
+  const featured = useApi('/sightings?withPhoto=true&sort=created_at&order=desc&limit=6');
   const forMap = useApi('/sightings?limit=50&sort=created_at');
   const ranking = useApi('/ranking');
   const s = stats.data;
@@ -44,12 +46,15 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="hero-evidence">
-            <div className="clip-note paper hand" aria-hidden="true">não estava sozinho na trilha…</div>
+          <div className="hero-evidence landscape">
+            <div className="clip-note paper hand" aria-hidden="true">o 44 não serviu…</div>
             <figure className="old-photo" style={{ margin: 0 }}>
               <span className="tape tape-tl" aria-hidden="true" />
-              <div className="frame"><OldPhotoScene /></div>
-              <figcaption className="caption hand">Serra do Mar, set. 1987</figcaption>
+              <div className="frame">
+                <img src={heroPhoto} width="1100" height="738" fetchPriority="high"
+                  alt="Câmera de campainha flagra uma criatura peluda enorme tentando calçar um tênis na varanda" />
+              </div>
+              <figcaption className="caption hand">Joinville, ago. 2025 · câmera da campainha</figcaption>
             </figure>
             <WaxSeal title="Selo de cera do arquivo" />
           </div>
@@ -61,7 +66,7 @@ export default function Home() {
         <div className="container">
           <div className="section-head">
             <div>
-              <span className="section-kicker">maior credibilidade</span>
+              <span className="section-kicker">registros mais recentes</span>
               <h2 className="display section-title">Casos em destaque</h2>
             </div>
             <Link to="/casos" className="btn btn-ghost">Ver o arquivo completo <ArrowRight size={16} /></Link>

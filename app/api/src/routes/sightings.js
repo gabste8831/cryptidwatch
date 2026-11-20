@@ -66,6 +66,9 @@ export function sightingRoutes({ db, config, storage, rateStore }) {
     if (q.uf) where.push(`s.uf = ${param(q.uf)}`);
     if (q.from) where.push(`s.seen_at >= ${param(q.from)}`);
     if (q.to) where.push(`s.seen_at <= ${param(q.to)}`);
+    if (q.withPhoto === 'true') {
+      where.push(`EXISTS (SELECT 1 FROM photos p WHERE p.sighting_id = s.id AND p.status = 'aprovado')`);
+    }
 
     // Coluna e direção vêm de listas fechadas, nunca do texto do usuário.
     const orderBy = `${SORT_COLUMNS[q.sort]} ${q.order === 'asc' ? 'ASC' : 'DESC'} NULLS LAST, s.id`;
