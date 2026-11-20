@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowRight, Crosshair, LocateFixed } from 'lucide-react';
+import { ArrowRight, LocateFixed } from 'lucide-react';
 import { api, useApi } from '../lib/api.js';
 import { todayIso, UFS } from '../lib/format.js';
 import { PhotoUploader } from '../components/PhotoUploader.jsx';
+import { WaxSeal } from '../components/Art.jsx';
 
 const empty = { cryptidId: null, title: '', description: '', city: '', uf: '', seenAt: '', latitude: '', longitude: '' };
 
@@ -58,17 +59,18 @@ export default function Report() {
 
   if (step === 3) {
     return (
-      <div className="container">
-        <div className="mission">
-          <div className="hud dim" style={{ marginBottom: 12 }}>Relato enviado para análise</div>
-          <div className="display mission-title">Missão cumprida</div>
-          <p style={{ maxWidth: 520, margin: '16px auto 28px' }}>
-            Seu caso entrou no arquivo. Um moderador vai verificar o relato e as evidências antes de publicar.
+      <div className="filed">
+        <div className="paper on-paper">
+          <WaxSeal title="Relato lacrado e arquivado" />
+          <p className="label" style={{ margin: "0 0 6px" }}>relato recebido</p>
+          <h1 className="display" style={{ fontSize: "clamp(30px, 5vw, 46px)" }}>Relato arquivado</h1>
+          <p style={{ maxWidth: 480, margin: "14px auto 26px" }}>
+            Seu caso foi lacrado e entrou no arquivo. Um moderador vai ler o relato e as evidências antes de publicar.
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link to="/meus-casos" className="btn btn-primary">Acompanhar meus casos</Link>
             <button type="button" className="btn" onClick={() => { setForm(empty); setCreated(null); setStep(1); }}>
-              Reportar outro
+              Registrar outro
             </button>
           </div>
         </div>
@@ -78,16 +80,17 @@ export default function Report() {
 
   return (
     <div className="container briefing">
-      <span className="section-kicker hud"><Crosshair size={14} style={{ verticalAlign: -2 }} /> Briefing</span>
+      <span className="section-kicker">formulário de relato · confidencial</span>
       <h1 className="display section-title" style={{ marginBottom: 20 }}>
-        {step === 1 ? 'Reportar avistamento' : 'Anexar evidências'}
+        {step === 1 ? 'Registrar um avistamento' : 'Anexar evidências'}
       </h1>
       <div className="steps" aria-hidden="true">
         <div className="step done" /><div className={`step${step >= 2 ? ' done' : ''}`} /><div className="step" />
       </div>
 
       {step === 1 && (
-        <form className="briefing-card form-grid" onSubmit={submit} noValidate>
+        <form className="briefing-card paper on-paper form-grid" onSubmit={submit} noValidate>
+          <span className="tape tape-tl" aria-hidden="true" />
           <div className="field">
             <label id="pick-label">O que você viu?</label>
             <div className="cryptid-pick" role="group" aria-labelledby="pick-label">
@@ -150,14 +153,14 @@ export default function Report() {
           {error && <div className="alert" role="alert">{error}</div>}
           <div>
             <button className="btn btn-primary" disabled={sending}>
-              {sending ? 'Enviando…' : <>Enviar relato <ArrowRight size={16} /></>}
+              {sending ? 'Enviando…' : <>Lacrar e enviar <ArrowRight size={16} /></>}
             </button>
           </div>
         </form>
       )}
 
       {step === 2 && created && (
-        <div className="briefing-card form-grid">
+        <div className="briefing-card paper on-paper form-grid">
           <p style={{ margin: 0 }}>
             Relato registrado. Tem fotos? Elas passam por verificação automática (formato, tamanho e remoção
             de metadados) antes de ir para o moderador.

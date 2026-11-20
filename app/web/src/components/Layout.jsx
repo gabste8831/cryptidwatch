@@ -18,11 +18,11 @@ export function Layout() {
         <div className="container topbar-inner">
           <Link to="/" className="logo" aria-label="CryptidWatch, início">
             <LogoMark className="logo-mark" />
-            <span className="logo-word">Cryptid<span>Watch</span></span>
+            <span className="logo-word">CryptidWatch<span className="logo-sub">arquivo confidencial</span></span>
           </Link>
           <nav className={`nav${open ? ' open' : ''}`} aria-label="Principal">
-            <NavLink to="/casos">Casos</NavLink>
-            <NavLink to="/ranking">Mais procurados</NavLink>
+            <NavLink to="/casos">Arquivo</NavLink>
+            <NavLink to="/ranking">Mais avistados</NavLink>
             {user && <NavLink to="/meus-casos">Meus casos</NavLink>}
             {isModerator && <NavLink to="/moderacao" className="inline-icon"><ShieldCheck size={15} /> Moderação</NavLink>}
           </nav>
@@ -52,8 +52,8 @@ export function Layout() {
       </main>
       <footer className="footer">
         <div className="container footer-inner">
-          <span className="hud">CryptidWatch · Arquivo público de avistamentos</span>
-          <span className="mono">Trabalho de Auditoria e Segurança de Sistemas · UNIDAVI</span>
+          <span>CryptidWatch · arquivo de avistamentos</span>
+          <span>Trabalho de Auditoria e Segurança de Sistemas · UNIDAVI</span>
         </div>
       </footer>
     </>

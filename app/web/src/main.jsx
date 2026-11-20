@@ -3,13 +3,11 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router';
 
 // Fontes servidas pelo próprio site (sem CDN externo: CSP mais fechada, SEC-100).
-import '@fontsource/anton/400.css';
 import '@fontsource/special-elite/400.css';
-import '@fontsource/barlow/400.css';
-import '@fontsource/barlow/600.css';
-import '@fontsource/barlow-condensed/600.css';
-import '@fontsource/barlow-condensed/700.css';
-import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/courier-prime/400.css';
+import '@fontsource/courier-prime/400-italic.css';
+import '@fontsource/courier-prime/700.css';
+import '@fontsource/homemade-apple/400.css';
 import 'leaflet/dist/leaflet.css';
 import './styles.css';
 

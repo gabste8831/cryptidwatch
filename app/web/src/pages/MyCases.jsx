@@ -25,7 +25,7 @@ export default function MyCases() {
     <div className="container">
       <div className="page-head section-head">
         <div>
-          <span className="section-kicker hud">Sua pasta</span>
+          <span className="section-kicker">Sua pasta</span>
           <h1 className="display section-title">Meus casos</h1>
         </div>
         <Link to="/reportar" className="btn btn-primary"><Plus size={16} /> Novo relato</Link>
@@ -35,12 +35,12 @@ export default function MyCases() {
       {data && (data.items.length ? (
         <div className="rank-list" style={{ marginBottom: 64 }}>
           {data.items.map((s) => (
-            <div key={s.id} className="queue-item">
+            <div key={s.id} className="queue-item paper on-paper">
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'start' }}>
                 <div>
-                  <div className="mono" style={{ color: 'var(--sun-2)' }}>{caseNumber(s.id)} · {s.cryptid.name}</div>
+                  <div className="mono blood">{caseNumber(s.id)} · {s.cryptid.name}</div>
                   <Link to={`/casos/${s.id}`} className="case-title" style={{ display: 'block', marginTop: 4 }}>{s.title}</Link>
-                  <div className="hud dim" style={{ marginTop: 4 }}>{s.city}/{s.uf} · {formatDate(s.seenAt)}</div>
+                  <div className="label" style={{ marginTop: 4 }}>{s.city}/{s.uf} · {formatDate(s.seenAt)}</div>
                 </div>
                 <Stamp status={s.status} />
               </div>

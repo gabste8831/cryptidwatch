@@ -1,9 +1,9 @@
 import { Link } from 'react-router';
-import { ArrowRight, Crosshair, Plus } from 'lucide-react';
+import { ArrowRight, Feather } from 'lucide-react';
 import { useApi } from '../lib/api.js';
 import { CaseCard } from '../components/CaseCard.jsx';
 import { CasesMap } from '../components/Maps.jsx';
-import { CryptidSilhouette, SunsetScene } from '../components/Art.jsx';
+import { CryptidSilhouette, OldPhotoScene, WaxSeal } from '../components/Art.jsx';
 import { Empty, ErrorBox, Loading } from '../components/States.jsx';
 
 export default function Home() {
@@ -11,87 +11,112 @@ export default function Home() {
   const featured = useApi('/sightings?sort=credibility&order=desc&limit=6');
   const forMap = useApi('/sightings?limit=50&sort=created_at');
   const ranking = useApi('/ranking');
-
   const s = stats.data;
+
   return (
     <>
-      <section className="hero">
-        <div className="hero-art"><SunsetScene /></div>
-        <div className="container hero-content">
-          <span className="hero-kicker hud"><Crosshair size={14} /> Arquivo aberto · relatos verificados</span>
-          <h1 className="display hero-title">Você <em>viu</em> alguma coisa?</h1>
-          <p className="hero-sub">
-            Pé-Grande na trilha, luz estranha no banhado, pegada que não é de bicho nenhum.
-            Registre o que viu. A comunidade comenta e o moderador avalia.
-          </p>
-          <div className="hero-actions">
-            <Link to="/reportar" className="btn btn-primary"><Plus size={18} /> Reportar avistamento</Link>
-            <Link to="/casos" className="btn">Explorar casos <ArrowRight size={18} /></Link>
-          </div>
-        </div>
-        <div className="stats-strip">
-          {[
-            [s?.cases, 'casos verificados'],
-            [s?.cases30d, 'nos últimos 30 dias'],
-            [s?.cryptids, 'criptídeos avistados'],
-            [s?.states, 'estados com relatos'],
-          ].map(([value, label]) => (
-            <div key={label} className="stat">
-              <div className="stat-value">{value ?? '—'}</div>
-              <div className="stat-label hud">{label}</div>
+      {/* Tela 1: a carta de abertura + a fotografia anexada. Cabe inteira na tela do notebook. */}
+      <section className="screen hero">
+        <div className="container hero-grid">
+          <div>
+            <span className="hero-kicker">
+              <span className="stamp stamp-aprovado">confidencial</span>
+              arquivo nº 0417
+            </span>
+            <h1 className="display hero-title">Você <span className="scribble">viu</span> alguma coisa?</h1>
+            <p className="hero-sub">
+              Um vulto na trilha, uma luz que não devia estar no banhado, pegadas que não são de bicho
+              nenhum. Registre o que viu. Cada relato é lido, verificado e arquivado.
+            </p>
+            <div className="hero-actions">
+              <Link to="/reportar" className="btn btn-primary"><Feather size={17} /> Registrar relato</Link>
+              <Link to="/casos" className="btn">Abrir o arquivo <ArrowRight size={17} /></Link>
             </div>
-          ))}
+            <div className="ledger" aria-label="Números do arquivo">
+              {[
+                [s?.cases, 'casos verificados'],
+                [s?.cases30d, 'nos últimos 30 dias'],
+                [s?.cryptids, 'criaturas registradas'],
+                [s?.states, 'estados com relatos'],
+              ].map(([value, label]) => (
+                <div key={label}><strong>{value ?? '—'}</strong><span>{label}</span></div>
+              ))}
+            </div>
+          </div>
+
+          <div className="hero-evidence">
+            <div className="clip-note paper hand" aria-hidden="true">não estava sozinho na trilha…</div>
+            <figure className="old-photo" style={{ margin: 0 }}>
+              <span className="tape tape-tl" aria-hidden="true" />
+              <div className="frame"><OldPhotoScene /></div>
+              <figcaption className="caption hand">Serra do Mar, set. 1987</figcaption>
+            </figure>
+            <WaxSeal title="Selo de cera do arquivo" />
+          </div>
         </div>
       </section>
 
-      <section className="section container">
-        <div className="section-head">
-          <div>
-            <span className="section-kicker hud">Maior credibilidade</span>
-            <h2 className="display section-title">Casos em destaque</h2>
+      {/* Tela 2: casos em destaque */}
+      <section className="screen">
+        <div className="container">
+          <div className="section-head">
+            <div>
+              <span className="section-kicker">maior credibilidade</span>
+              <h2 className="display section-title">Casos em destaque</h2>
+            </div>
+            <Link to="/casos" className="btn btn-ghost">Ver o arquivo completo <ArrowRight size={16} /></Link>
           </div>
-          <Link to="/casos" className="btn btn-ghost">Ver todos <ArrowRight size={16} /></Link>
+          {featured.loading && <Loading />}
+          {featured.error && <ErrorBox error={featured.error} onRetry={featured.reload} />}
+          {featured.data && (featured.data.items.length
+            ? <div className="case-grid">{featured.data.items.map((c) => <CaseCard key={c.id} s={c} />)}</div>
+            : <Empty title="O arquivo está vazio" action={<Link to="/reportar" className="btn btn-primary">Registrar o primeiro relato</Link>}>
+                Nenhum caso verificado ainda.
+              </Empty>)}
         </div>
-        {featured.loading && <Loading />}
-        {featured.error && <ErrorBox error={featured.error} onRetry={featured.reload} />}
-        {featured.data && (featured.data.items.length
-          ? <div className="case-grid">{featured.data.items.map((c) => <CaseCard key={c.id} s={c} />)}</div>
-          : <Empty title="Arquivo vazio" action={<Link to="/reportar" className="btn btn-primary">Abrir o primeiro caso</Link>}>
-              Nenhum caso verificado ainda.
-            </Empty>)}
       </section>
 
-      <section className="section container" style={{ paddingTop: 0 }}>
-        <div className="section-head">
-          <div>
-            <span className="section-kicker hud">Radar</span>
-            <h2 className="display section-title">Onde estão aparecendo</h2>
+      {/* Tela 3: mapa */}
+      <section className="screen">
+        <div className="container">
+          <div className="section-head">
+            <div>
+              <span className="section-kicker">mapa da investigação</span>
+              <h2 className="display section-title">Onde estão aparecendo</h2>
+            </div>
           </div>
+          {forMap.data ? <CasesMap items={forMap.data.items} /> : <Loading label="Abrindo o mapa…" />}
         </div>
-        {forMap.data ? <CasesMap items={forMap.data.items} /> : <Loading label="Ligando o radar…" />}
       </section>
 
-      <section className="section container" style={{ paddingTop: 0 }}>
-        <div className="section-head">
-          <div>
-            <span className="section-kicker hud">Ranking</span>
-            <h2 className="display section-title">Mais procurados</h2>
+      {/* Tela 4: os mais avistados, em selos postais */}
+      <section className="screen">
+        <div className="container">
+          <div className="section-head">
+            <div>
+              <span className="section-kicker">coleção do arquivo</span>
+              <h2 className="display section-title">Os mais avistados</h2>
+            </div>
+            <Link to="/ranking" className="btn btn-ghost">Ranking completo <ArrowRight size={16} /></Link>
           </div>
-          <Link to="/ranking" className="btn btn-ghost">Ranking completo <ArrowRight size={16} /></Link>
+          {ranking.data && (
+            <div className="stamp-grid">
+              {ranking.data.items.slice(0, 4).map((c, i) => (
+                <Link key={c.cryptidId} to={`/casos?cryptid=${c.slug}`} className="postage">
+                  <span className="postage-value">{i + 1}</span>
+                  <div className="postage-inner">
+                    <div className="postage-art"><CryptidSilhouette slug={c.slug} /></div>
+                    <p className="postage-name">{c.name}</p>
+                    <div className="postage-foot">
+                      <span>{c.total} avistamento{c.total === 1 ? '' : 's'}</span>
+                      <span>CW</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
-        {ranking.data && (
-          <div className="wanted-grid">
-            {ranking.data.items.slice(0, 4).map((c, i) => (
-              <Link key={c.cryptidId} to={`/casos?cryptid=${c.slug}`} className="wanted">
-                <span className="wanted-rank">{i + 1}</span>
-                <div className="wanted-head">Procura-se</div>
-                <div className="wanted-photo"><CryptidSilhouette slug={c.slug} /></div>
-                <div className="wanted-name">{c.name}</div>
-                <div className="wanted-count">{c.total} avistamento{c.total === 1 ? '' : 's'}</div>
-              </Link>
-            ))}
-          </div>
-        )}
       </section>
     </>
   );

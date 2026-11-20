@@ -21,7 +21,7 @@ export default function Moderation() {
   return (
     <div className="container">
       <div className="page-head">
-        <span className="section-kicker hud">Acesso restrito · moderador</span>
+        <span className="section-kicker">Acesso restrito · moderador</span>
         <h1 className="display section-title">Mesa de análise</h1>
       </div>
       <div className="tabs" role="tablist">
@@ -65,13 +65,13 @@ function SightingQueue({ items, onDone }) {
   const [stars, setStars] = useState({});
   if (!items.length) return <Empty title="Mesa limpa">Nenhum relato esperando análise.</Empty>;
   return items.map((s) => (
-    <div key={s.id} className="queue-item">
-      <div className="mono" style={{ color: 'var(--sun-2)' }}>{caseNumber(s.id)} · {s.cryptid.name} · {s.author.name}</div>
+    <div key={s.id} className="queue-item paper on-paper">
+      <div className="mono blood">{caseNumber(s.id)} · {s.cryptid.name} · {s.author.name}</div>
       <div className="case-title">{s.title}</div>
-      <div className="hud dim">{s.city}/{s.uf} · avistado em {formatDate(s.seenAt)} · enviado {timeAgo(s.createdAt)}</div>
+      <div className="label">{s.city}/{s.uf} · avistado em {formatDate(s.seenAt)} · enviado {timeAgo(s.createdAt)}</div>
       <p className="type dim" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{s.description}</p>
       <div className="queue-actions">
-        <span className="hud dim">Credibilidade</span>
+        <span className="label">Credibilidade</span>
         <StarsInput value={stars[s.id] ?? 3} onChange={(v) => setStars((m) => ({ ...m, [s.id]: v }))} />
         <button type="button" className="btn btn-sm btn-primary"
           onClick={() => decide(() => api.post(`/moderation/sightings/${s.id}/approve`, { credibility: stars[s.id] ?? 3 }), 'Caso verificado e publicado.')}>
@@ -95,10 +95,10 @@ function PhotoQueue({ items, onDone }) {
   return (
     <div className="photo-queue">
       {items.map((p) => (
-        <div key={p.id} className="queue-item">
+        <div key={p.id} className="queue-item paper on-paper">
           <a href={p.url} target="_blank" rel="noopener noreferrer"><img src={p.thumbUrl} alt={`Foto do caso ${p.sightingTitle}`} style={{ width: '100%', aspectRatio: 1, objectFit: 'cover' }} /></a>
           <div>
-            <Link to={`/casos/${p.sightingId}`} className="hud">{p.sightingTitle}</Link>
+            <Link to={`/casos/${p.sightingId}`} className="label">{p.sightingTitle}</Link>
             <div className="mono mute" style={{ fontSize: 11, wordBreak: 'break-all' }}>
               {p.width}×{p.height} · {Math.round(p.sizeBytes / 1024)} KB<br />SHA-256 {p.sha256?.slice(0, 16)}…
             </div>
@@ -121,8 +121,8 @@ function CommentQueue({ items, onDone }) {
   const decide = useDecision(onDone);
   if (!items.length) return <Empty title="Sem denúncias">Nenhum depoimento oculto por denúncia.</Empty>;
   return items.map((c) => (
-    <div key={c.id} className="queue-item">
-      <div className="hud dim">{c.author.name} em <Link to={`/casos/${c.sightingId}`} style={{ color: 'var(--sun-2)' }}>{c.sightingTitle}</Link></div>
+    <div key={c.id} className="queue-item paper on-paper">
+      <div className="label">{c.author.name} em <Link to={`/casos/${c.sightingId}`} className="blood">{c.sightingTitle}</Link></div>
       <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{c.body}</p>
       <div className="mono mute">Denúncias: {c.reasons.join(' · ')}</div>
       <div className="queue-actions">

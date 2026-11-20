@@ -4,7 +4,7 @@ export function Loading({ label = 'Abrindo o arquivo…' }) {
   return (
     <div className="loading container" role="status">
       <span className="spinner" aria-hidden="true" />
-      <span className="hud">{label}</span>
+      <span className="label">{label}</span>
     </div>
   );
 }
