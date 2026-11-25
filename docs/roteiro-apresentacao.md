@@ -3,7 +3,7 @@
 4 apresentadores · ~12 minutos + demonstração · o texto completo de cada slide também
 está nas **notas do apresentador** da apresentação. A apresentação é a versão curta:
 os detalhes técnicos, as etapas e todos os prints estão no artigo
-(`docs/artigo/artigo-cryptidwatch.docx`).
+(`docs/artigo/artigo-cryptidwatch.pdf`).
 
 | Quem | Slides | Assunto | Tempo |
 |---|---|---|---|
